@@ -1,4 +1,4 @@
-import { useScribe } from "@elevenlabs/react";
+import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { Mic, MicOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -26,7 +26,7 @@ export function MicRecorder({
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
-    commitStrategy: "vad",
+    commitStrategy: CommitStrategy.VAD,
     onCommittedTranscript: (data: { text: string }) => {
       finalRef.current = (finalRef.current + " " + data.text).trim();
     },
