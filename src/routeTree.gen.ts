@@ -9,10 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PracticeRouteImport } from './routes/practice'
+import { Route as BattleRouteImport } from './routes/battle'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as ApiScribeTokenRouteImport } from './routes/api/scribe-token'
 
+const PracticeRoute = PracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BattleRoute = BattleRouteImport.update({
+  id: '/battle',
+  path: '/battle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +43,64 @@ const ApiScribeTokenRoute = ApiScribeTokenRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/battle': typeof BattleRoute
+  '/practice': typeof PracticeRoute
   '/api/scribe-token': typeof ApiScribeTokenRoute
   '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/battle': typeof BattleRoute
+  '/practice': typeof PracticeRoute
   '/api/scribe-token': typeof ApiScribeTokenRoute
   '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/battle': typeof BattleRoute
+  '/practice': typeof PracticeRoute
   '/api/scribe-token': typeof ApiScribeTokenRoute
   '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/scribe-token' | '/api/tts'
+  fullPaths: '/' | '/battle' | '/practice' | '/api/scribe-token' | '/api/tts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/scribe-token' | '/api/tts'
-  id: '__root__' | '/' | '/api/scribe-token' | '/api/tts'
+  to: '/' | '/battle' | '/practice' | '/api/scribe-token' | '/api/tts'
+  id:
+    | '__root__'
+    | '/'
+    | '/battle'
+    | '/practice'
+    | '/api/scribe-token'
+    | '/api/tts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BattleRoute: typeof BattleRoute
+  PracticeRoute: typeof PracticeRoute
   ApiScribeTokenRoute: typeof ApiScribeTokenRoute
   ApiTtsRoute: typeof ApiTtsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/practice': {
+      id: '/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof PracticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/battle': {
+      id: '/battle'
+      path: '/battle'
+      fullPath: '/battle'
+      preLoaderRoute: typeof BattleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,9 +127,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BattleRoute: BattleRoute,
+  PracticeRoute: PracticeRoute,
   ApiScribeTokenRoute: ApiScribeTokenRoute,
   ApiTtsRoute: ApiTtsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
