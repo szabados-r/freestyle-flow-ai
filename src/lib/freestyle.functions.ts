@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
 import { STYLES, type StyleId } from "./styles";
@@ -22,10 +23,14 @@ const ScoreSchema = z.object({
 function getGateway() {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY missing");
-  // Lazy import keeps server-only module out of client bundle root.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createLovableAiGatewayProvider } = require("./ai-gateway.server") as typeof import("./ai-gateway.server");
-  return createLovableAiGatewayProvider(key);
+  return createOpenAICompatible({
+    name: "lovable",
+    baseURL: "https://ai.gateway.lovable.dev/v1",
+    headers: {
+      "Lovable-API-Key": key,
+      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+    },
+  });
 }
 
 const styleIdSchema = z.enum(["drake", "future", "nicki", "thug"]);
