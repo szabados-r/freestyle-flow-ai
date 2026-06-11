@@ -1,0 +1,145 @@
+import { createServerFn } from "@tanstack/react-start";
+import { generateText, Output } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { z } from "zod";
+
+import { STYLES, type StyleId } from "./styles";
+
+const BarSchema = z.object({
+  bar: z.string().describe("A single 4-beat rap bar, 8-14 syllables, ending on a clear rhyme word."),
+  endWord: z.string().describe("The final rhyming word of the bar"),
+});
+
+const ScoreSchema = z.object({
+  rhyme: z.number().min(0).max(10),
+  flow: z.number().min(0).max(10),
+  onBeat: z.number().min(0).max(10),
+  styleFit: z.number().min(0).max(10),
+  overall: z.number().min(0).max(100),
+  endWord: z.string(),
+  feedback: z.string().describe("One short punch-up line, 1 sentence."),
+});
+
+function getGateway() {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("LOVABLE_API_KEY missing");
+  return createOpenAICompatible({
+    name: "lovable",
+    baseURL: "https://ai.gateway.lovable.dev/v1",
+    headers: {
+      "Lovable-API-Key": key,
+      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+    },
+  });
+}
+
+const styleIdSchema = z.enum(["drake", "future", "nicki", "thug"]);
+
+export const generateBar = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      styleId: styleIdSchema,
+      previousUserBar: z.string().optional(),
+      previousEndWord: z.string().optional(),
+      roundIndex: z.number().int().min(0).default(0),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const style = STYLES[data.styleId as StyleId];
+    const gateway = getGateway();
+
+    const system = `You are a freestyle rap battle opponent channeling the energy of ${style.name} (${style.vibe}). Cadence: ${style.cadence}. Occasionally use adlibs like ${style.adlibs.join(", ")}.
+
+RULES:
+- Output ONE bar only (4 beats, 8-14 syllables).
+- End on a strong, clearly-rhymable word (the "endWord").
+- Stay clean of slurs and real-person disses. Brag, flex, wordplay, punchlines.
+- Do NOT quote copyrighted lyrics. Original lines only.
+- No quotation marks. No emojis.`;
+
+    const prompt = data.previousUserBar
+      ? `The user just rapped: "${data.previousUserBar}" (ended on "${data.previousEndWord ?? ""}"). Hit back with one bar that responds and one-ups them. This is round ${data.roundIndex + 1}.`
+      : `Open the cypher. Drop your first bar to set the tone. Round ${data.roundIndex + 1}.`;
+
+    const { experimental_output } = await generateText({
+      model: gateway("google/gemini-3-flash-preview"),
+      system,
+      prompt,
+      experimental_output: Output.object({ schema: BarSchema }),
+    });
+
+    return experimental_output;
+  });
+
+export const scoreBar = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      styleId: styleIdSchema,
+      aiBar: z.string(),
+      aiEndWord: z.string(),
+      userBar: z.string(),
+      bpm: z.number(),
+      durationMs: z.number().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const style = STYLES[data.styleId as StyleId];
+    const gateway = getGateway();
+
+    const expectedBarMs = (60_000 / data.bpm) * 4;
+    const timingNote = data.durationMs
+      ? `User took ${Math.round(data.durationMs)}ms; a clean 4-beat bar at ${data.bpm} BPM is ~${Math.round(expectedBarMs)}ms.`
+      : "No precise timing available; judge from text rhythm.";
+
+    const system = `You are a strict but fun hip-hop freestyle judge. Score the USER's bar against the AI's bar, in the style of ${style.name} (${style.vibe}).
+
+Score each 0-10:
+- rhyme: how well the user's end-word and internal rhymes echo the AI's end-word "${data.aiEndWord}".
+- flow: syllable count match (target ${expectedBarMs.toFixed(0)}ms / ~10 syllables), even cadence.
+- onBeat: ${timingNote} Penalize if way too short or rambling.
+- styleFit: matches ${style.name}'s vibe & cadence.
+- overall: 0-100 holistic.
+- endWord: the user's last meaningful word.
+- feedback: ONE short hype-or-roast line (under 15 words).
+
+Be honest; a weak bar should score low. A great bar should score high. Avg should be ~60-75 for casual users.`;
+
+    const prompt = `AI bar: "${data.aiBar}"
+User bar: "${data.userBar}"
+
+Score it.`;
+
+    const { experimental_output } = await generateText({
+      model: gateway("google/gemini-3-flash-preview"),
+      system,
+      prompt,
+      experimental_output: Output.object({ schema: ScoreSchema }),
+    });
+
+    return experimental_output;
+  });
+
+export const battleVerdict = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      styleId: styleIdSchema,
+      userTotal: z.number(),
+      aiTotal: z.number(),
+      rounds: z.number(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const style = STYLES[data.styleId as StyleId];
+    const gateway = getGateway();
+
+    const winner =
+      data.userTotal > data.aiTotal ? "user" : data.userTotal < data.aiTotal ? "ai" : "draw";
+
+    const { text } = await generateText({
+      model: gateway("google/gemini-3-flash-preview"),
+      system: `You are ${style.name}. After an ${data.rounds}-round battle, deliver a 2-3 sentence closing verdict in your vibe (${style.vibe}). Be playful, not vulgar. No real-person disses.`,
+      prompt: `Final score — You (AI): ${data.aiTotal}, Challenger: ${data.userTotal}. Winner: ${winner}. Drop the closing words.`,
+    });
+
+    return { winner, recap: text };
+  });
