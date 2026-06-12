@@ -1,4 +1,4 @@
-export type StyleId = "drake" | "future" | "nicki" | "thug";
+export type StyleId = "drake" | "future" | "nicki" | "thug" | "magyar";
 
 export interface ArtistStyle {
   id: StyleId;
@@ -9,6 +9,8 @@ export interface ArtistStyle {
   adlibs: string[];
   voiceId: string; // ElevenLabs voice
   accent: string; // hex / css color
+  language: "en" | "hu";
+  languageLabel: string;
 }
 
 export const STYLES: Record<StyleId, ArtistStyle> = {
@@ -21,6 +23,8 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     adlibs: ["yeah", "you know", "girl"],
     voiceId: "nPczCjzI2devNBz1zQrb", // Brian
     accent: "#f0abfc",
+    language: "en",
+    languageLabel: "English",
   },
   future: {
     id: "future",
@@ -31,6 +35,8 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     adlibs: ["ay", "hold up", "pluto"],
     voiceId: "cjVigY5qzO86Huf0OWal", // Eric
     accent: "#a3e635",
+    language: "en",
+    languageLabel: "English",
   },
   nicki: {
     id: "nicki",
@@ -41,6 +47,8 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     adlibs: ["okurr", "yass", "uh"],
     voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice
     accent: "#f472b6",
+    language: "en",
+    languageLabel: "English",
   },
   thug: {
     id: "thug",
@@ -51,6 +59,20 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     adlibs: ["slime", "skrt", "yuh"],
     voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie
     accent: "#22d3ee",
+    language: "en",
+    languageLabel: "English",
+  },
+  magyar: {
+    id: "magyar",
+    name: "Magyar MC",
+    blurb: "Budapesti freestyle — magyar nyelven, kemény rímek.",
+    vibe: "magyar hip-hop, utcai energia, okos szójátékok",
+    cadence: "magyar prozódia, hangsúlyos első szótag, tiszta végrímek",
+    adlibs: ["yo", "ja", "hallod"],
+    voiceId: "JBFqnCBsd6RMkjVDRZzb", // George (multilingual)
+    accent: "#facc15",
+    language: "hu",
+    languageLabel: "Magyar",
   },
 };
 

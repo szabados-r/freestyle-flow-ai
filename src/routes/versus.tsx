@@ -10,7 +10,7 @@ import { BPM_OPTIONS, STYLES, type StyleId } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 const search = z.object({
-  style: z.enum(["drake", "future", "nicki", "thug"]).optional(),
+  style: z.enum(["drake", "future", "nicki", "thug", "magyar"]).optional(),
   bpm: z.coerce.number().optional(),
   p1: z.string().optional(),
   p2: z.string().optional(),
