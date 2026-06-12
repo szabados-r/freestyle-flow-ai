@@ -33,7 +33,7 @@ function getGateway() {
   });
 }
 
-const styleIdSchema = z.enum(["drake", "future", "nicki", "thug"]);
+const styleIdSchema = z.enum(["drake", "future", "nicki", "thug", "magyar"]);
 
 export const generateBar = createServerFn({ method: "POST" })
   .inputValidator(
@@ -48,7 +48,14 @@ export const generateBar = createServerFn({ method: "POST" })
     const style = STYLES[data.styleId as StyleId];
     const gateway = getGateway();
 
+    const langRule =
+      style.language === "hu"
+        ? `LANGUAGE: Write the bar in HUNGARIAN (magyar nyelven). Use natural Hungarian slang, no English words except common loanwords. Rhyme using Hungarian word endings.`
+        : `LANGUAGE: Write the bar in English.`;
+
     const system = `You are a freestyle rap battle opponent channeling the energy of ${style.name} (${style.vibe}). Cadence: ${style.cadence}. Occasionally use adlibs like ${style.adlibs.join(", ")}.
+
+${langRule}
 
 RULES:
 - Output ONE bar only (4 beats, 8-14 syllables).
@@ -91,7 +98,12 @@ export const scoreBar = createServerFn({ method: "POST" })
       ? `User took ${Math.round(data.durationMs)}ms; a clean 4-beat bar at ${data.bpm} BPM is ~${Math.round(expectedBarMs)}ms.`
       : "No precise timing available; judge from text rhythm.";
 
-    const system = `You are a strict but fun hip-hop freestyle judge. Score the USER's bar against the AI's bar, in the style of ${style.name} (${style.vibe}).
+    const langNote =
+      style.language === "hu"
+        ? `Both bars should be in Hungarian. Judge Hungarian rhyme and flow naturally.`
+        : `Both bars should be in English.`;
+
+    const system = `You are a strict but fun hip-hop freestyle judge. Score the USER's bar against the AI's bar, in the style of ${style.name} (${style.vibe}). ${langNote}
 
 Score each 0-10:
 - rhyme: how well the user's end-word and internal rhymes echo the AI's end-word "${data.aiEndWord}".
