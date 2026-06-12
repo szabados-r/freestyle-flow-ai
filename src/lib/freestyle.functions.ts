@@ -143,3 +143,30 @@ export const battleVerdict = createServerFn({ method: "POST" })
 
     return { winner, recap: text };
   });
+
+export const versusVerdict = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      styleId: styleIdSchema,
+      p1Name: z.string(),
+      p2Name: z.string(),
+      p1Total: z.number(),
+      p2Total: z.number(),
+      rounds: z.number(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const style = STYLES[data.styleId as StyleId];
+    const gateway = getGateway();
+
+    const winner =
+      data.p1Total > data.p2Total ? data.p1Name : data.p2Total > data.p1Total ? data.p2Name : "draw";
+
+    const { text } = await generateText({
+      model: gateway("google/gemini-3-flash-preview"),
+      system: `You are ${style.name}, hosting a ${data.rounds}-round freestyle battle between two challengers. Deliver a 2-3 sentence closing verdict in your vibe (${style.vibe}). Be playful, hype the winner, roast the loser lightly. No real-person disses, no slurs.`,
+      prompt: `Battle ended. ${data.p1Name}: ${Math.round(data.p1Total)} points. ${data.p2Name}: ${Math.round(data.p2Total)} points. Winner: ${winner}. Drop the closing words.`,
+    });
+
+    return { winner, recap: text };
+  });
