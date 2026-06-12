@@ -81,7 +81,7 @@ function Index() {
         </div>
       </section>
 
-      <section className="mt-10 grid gap-4 md:grid-cols-2">
+      <section className="mt-10 grid gap-4 md:grid-cols-3">
         <Link to="/practice" search={{ style: styleId, bpm }}>
           <Button
             className="display h-auto w-full py-6 text-2xl uppercase tracking-widest"
@@ -103,6 +103,18 @@ function Index() {
           </Button>
           <p className="mt-2 text-xs text-muted-foreground">
             Trade 8 bars. Final verdict in {style.name}'s voice.
+          </p>
+        </Link>
+        <Link to="/versus" search={{ style: styleId, bpm }}>
+          <Button
+            variant="outline"
+            className="display h-auto w-full border-2 py-6 text-2xl uppercase tracking-widest"
+            style={{ borderColor: style.accent, color: style.accent }}
+          >
+            Versus · 1v1
+          </Button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Pass the phone. Battle a friend. {style.name} judges.
           </p>
         </Link>
       </section>
