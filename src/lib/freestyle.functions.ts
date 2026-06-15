@@ -33,7 +33,7 @@ function getGateway() {
   });
 }
 
-const styleIdSchema = z.enum(["drake", "future", "nicki", "thug", "magyar"]);
+const styleIdSchema = z.enum(["drake", "future", "nicki", "thug", "magyar", "hofi", "azahriah"]);
 
 export const generateBar = createServerFn({ method: "POST" })
   .inputValidator(
