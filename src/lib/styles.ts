@@ -1,4 +1,11 @@
-export type StyleId = "drake" | "future" | "nicki" | "thug" | "magyar";
+export type StyleId =
+  | "drake"
+  | "future"
+  | "nicki"
+  | "thug"
+  | "magyar"
+  | "hofi"
+  | "azahriah";
 
 export interface ArtistStyle {
   id: StyleId;
@@ -71,6 +78,30 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     adlibs: ["yo", "ja", "hallod"],
     voiceId: "JBFqnCBsd6RMkjVDRZzb", // George (multilingual)
     accent: "#facc15",
+    language: "hu",
+    languageLabel: "Magyar",
+  },
+  hofi: {
+    id: "hofi",
+    name: "Beton",
+    blurb: "Nyers magyar drill — sötét, kemény, utcai.",
+    vibe: "magyar drill, sötét hangulat, nyers utcai energia, hideg flex",
+    cadence: "lassú drill kadencia, súlyos végrímek, szaggatott flow",
+    adlibs: ["yo", "beton", "ah"],
+    voiceId: "JBFqnCBsd6RMkjVDRZzb",
+    accent: "#9ca3af",
+    language: "hu",
+    languageLabel: "Magyar",
+  },
+  azahriah: {
+    id: "azahriah",
+    name: "Azarja",
+    blurb: "Melodikus magyar pop-rap — dallamos, érzelmes flow.",
+    vibe: "dallamos magyar pop-rap, érzelmes énekrap, könnyed nyári vibe",
+    cadence: "dallamos félig énekelt sorok, lágy triplák, elnyújtott végszavak",
+    adlibs: ["yeah", "uhh", "na"],
+    voiceId: "JBFqnCBsd6RMkjVDRZzb",
+    accent: "#f97316",
     language: "hu",
     languageLabel: "Magyar",
   },
