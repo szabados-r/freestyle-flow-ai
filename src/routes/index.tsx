@@ -274,30 +274,6 @@ function StepRapper({
   );
 }
 
-function StepLanguage({
-  accent,
-  value,
-  onPick,
-}: {
-  accent: string;
-  value: Lang | null;
-  onPick: (l: Lang) => void;
-}) {
-  const opts: { id: Lang; label: string; blurb: string }[] = [
-    { id: "en", label: "English", blurb: "AI writes and judges bars in English." },
-    { id: "hu", label: "Magyar", blurb: "AI magyarul ír és értékel." },
-  ];
-  return (
-    <div>
-      <StepTitle n={3} title="Pick the language" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {opts.map((o) => (
-          <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="script text-2xl leading-tight">{o.label}</div>
-            <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }
