@@ -23,18 +23,24 @@ export function MicRecorder({
   const [recording, setRecording] = useState(false);
   const startTimeRef = useRef<number>(0);
   const finalRef = useRef<string>("");
+  const partialRef = useRef<string>("");
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
     commitStrategy: CommitStrategy.VAD,
+    onPartialTranscript: (data: { text: string }) => {
+      partialRef.current = data.text ?? "";
+    },
     onCommittedTranscript: (data: { text: string }) => {
       finalRef.current = (finalRef.current + " " + data.text).trim();
+      partialRef.current = "";
     },
   });
 
   const start = useCallback(async () => {
     setError(null);
     finalRef.current = "";
+    partialRef.current = "";
     try {
       const res = await fetch("/api/scribe-token", { method: "POST" });
       if (!res.ok) throw new Error("token failed");
@@ -52,16 +58,23 @@ export function MicRecorder({
 
   const stop = useCallback(async () => {
     const dur = performance.now() - startTimeRef.current;
+    setRecording(false);
+    // Force-finalize any in-progress segment before tearing down.
+    try {
+      scribe.commit?.();
+    } catch {
+      // ignore
+    }
+    // Wait for the commit event to land, then disconnect.
+    await new Promise((r) => setTimeout(r, 600));
     try {
       await scribe.disconnect();
     } catch {
       // ignore
     }
-    setRecording(false);
-    // Allow last commit event to fire
-    setTimeout(() => {
-      onDone({ transcript: finalRef.current.trim(), durationMs: dur });
-    }, 250);
+    // Fall back to the latest partial if nothing got committed.
+    const text = (finalRef.current || partialRef.current).trim();
+    onDone({ transcript: text, durationMs: dur });
   }, [scribe, onDone]);
 
   useEffect(() => {
@@ -90,7 +103,7 @@ export function MicRecorder({
             {recording ? "Listening…" : "Mic idle"}
           </div>
           <div className="mt-1 min-h-[1.5rem] text-sm">
-            {scribe.partialTranscript || finalRef.current || (
+            {finalRef.current || scribe.partialTranscript || (
               <span className="text-muted-foreground">Drop your bar…</span>
             )}
           </div>
