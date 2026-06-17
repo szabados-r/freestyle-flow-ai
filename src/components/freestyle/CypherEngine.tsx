@@ -29,6 +29,7 @@ interface RoundData {
   userTranscript?: string;
   durationMs?: number;
   score?: ScoreData;
+  pending?: boolean;
 }
 
 export function CypherEngine({
@@ -57,7 +58,7 @@ export function CypherEngine({
   const [countdown, setCountdown] = useState(4);
   const [verdict, setVerdict] = useState<{ winner: string; recap: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const lastUserBarRef = useRef<{ bar: string; end: string } | undefined>(undefined);
+  const pendingRef = useRef<Map<number, Promise<string>>>(new Map());
 
   const totalRounds = maxRounds ?? 4;
   const totalUser = history.reduce((s, r) => s + (r.score?.overall ?? 0), 0);
@@ -115,21 +116,23 @@ export function CypherEngine({
   const handleMicDone = useCallback(
     async (result: MicResult) => {
       if (!round) return;
-      if (!result.transcript) {
-        toast.error("Didn't catch that. Try again.");
-        setPhase("userTurn");
-        return;
-      }
       const entry: RoundData = {
         ...round,
-        userTranscript: result.transcript,
+        userTranscript: "",
         durationMs: result.durationMs,
-      };
-      lastUserBarRef.current = {
-        bar: result.transcript,
-        end: result.transcript.trim().split(/\s+/).pop() ?? "",
+        pending: true,
       };
       const newHistory = [...history, entry];
+      const idx = newHistory.length - 1;
+      pendingRef.current.set(idx, result.transcriptPromise);
+      // Resolve in the background and patch the entry when ready.
+      void result.transcriptPromise.then((text) => {
+        setHistory((h) =>
+          h.map((r, i) =>
+            i === idx ? { ...r, userTranscript: text, pending: false } : r,
+          ),
+        );
+      });
       setHistory(newHistory);
       setRound(null);
       if (newHistory.length >= totalRounds) {
@@ -137,8 +140,19 @@ export function CypherEngine({
         setPhase("scoringAll");
         clock.stop();
         try {
+          // Wait for any still-transcribing bars to finish.
+          const transcripts = await Promise.all(
+            newHistory.map((_, i) =>
+              pendingRef.current.get(i) ?? Promise.resolve(""),
+            ),
+          );
+          const resolved = newHistory.map((r, i) => ({
+            ...r,
+            userTranscript: transcripts[i] || r.userTranscript || "",
+            pending: false,
+          }));
           const scored = await Promise.all(
-            newHistory.map((r) =>
+            resolved.map((r) =>
               scoreBar({
                 data: {
                   styleId,
