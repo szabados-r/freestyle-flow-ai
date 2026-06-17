@@ -63,25 +63,36 @@
 
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.08 0.02 300);
-  --foreground: oklch(0.98 0.01 80);
-  --card: oklch(0.13 0.03 300);
-  --card-foreground: oklch(0.98 0.01 80);
-  --popover: oklch(0.13 0.03 300);
-  --popover-foreground: oklch(0.98 0.01 80);
-  --primary: oklch(0.75 0.28 330);
-  --primary-foreground: oklch(0.1 0.02 300);
-  --secondary: oklch(0.2 0.04 300);
-  --secondary-foreground: oklch(0.98 0.01 80);
-  --muted: oklch(0.18 0.03 300);
-  --muted-foreground: oklch(0.7 0.04 300);
-  --accent: oklch(0.85 0.22 130);
-  --accent-foreground: oklch(0.1 0.02 300);
+  /* Dark background with warm undertone — like the black behind the rhinestone glove */
+  --background: oklch(0.09 0.005 60);
+  --foreground: oklch(0.94 0.02 70);
+  --card: oklch(0.13 0.008 60);
+  --card-foreground: oklch(0.94 0.02 70);
+  --popover: oklch(0.13 0.008 60);
+  --popover-foreground: oklch(0.94 0.02 70);
+  /* Champagne / pearl shimmer accent */
+  --primary: oklch(0.86 0.06 85);
+  --primary-foreground: oklch(0.1 0.01 60);
+  --secondary: oklch(0.18 0.01 60);
+  --secondary-foreground: oklch(0.94 0.02 70);
+  --muted: oklch(0.16 0.008 60);
+  --muted-foreground: oklch(0.68 0.025 70);
+  --accent: oklch(0.78 0.08 60);
+  --accent-foreground: oklch(0.1 0.01 60);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.25 0.04 300);
-  --input: oklch(0.2 0.03 300);
-  --ring: oklch(0.75 0.28 330);
+  --border: oklch(0.22 0.01 60);
+  --input: oklch(0.18 0.01 60);
+  --ring: oklch(0.78 0.08 60);
+  /* Paper collage tones (the taped portrait) */
+  --paper: oklch(0.92 0.03 85);
+  --paper-shadow: oklch(0.78 0.04 75);
+  --paper-ink: oklch(0.18 0.02 60);
+  --tape: oklch(0.88 0.04 85 / 0.55);
+  --champagne-1: #f4e6c4;
+  --champagne-2: #d9b67a;
+  --champagne-3: #fff7df;
+  --champagne-4: #b08a4a;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,16 +151,105 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    background-color: #0a0907;
     background-image:
-      radial-gradient(circle at 20% 10%, oklch(0.2 0.15 330 / 0.5), transparent 50%),
-      radial-gradient(circle at 80% 80%, oklch(0.2 0.15 200 / 0.4), transparent 50%);
+      radial-gradient(ellipse at 50% 0%, rgba(217, 182, 122, 0.10), transparent 55%),
+      radial-gradient(ellipse at 80% 100%, rgba(176, 138, 74, 0.08), transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     background-attachment: fixed;
   }
 
   .display {
-    font-family: "Impact", "Bebas Neue", "Oswald", "Arial Narrow", sans-serif;
-    letter-spacing: 0.01em;
-    font-weight: 900;
+    font-family: "Bebas Neue", "Impact", "Oswald", "Arial Narrow", sans-serif;
+    letter-spacing: 0.04em;
+    font-weight: 400;
   }
+
+  .serif {
+    font-family: "Italiana", "Cormorant", "Didot", "Bodoni 72", serif;
+    letter-spacing: 0.02em;
+    font-weight: 400;
+  }
+
+  .mono {
+    font-family: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  /* Champagne / rhinestone shimmer text */
+  .bling {
+    background: linear-gradient(
+      105deg,
+      var(--champagne-4) 0%,
+      var(--champagne-2) 18%,
+      var(--champagne-3) 38%,
+      #ffffff 50%,
+      var(--champagne-3) 62%,
+      var(--champagne-2) 82%,
+      var(--champagne-4) 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: bling-shift 6s linear infinite;
+    text-shadow: 0 0 40px rgba(244, 230, 196, 0.25);
+  }
+
+  @keyframes bling-shift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* Taped paper card — torn cream paper on dark backdrop */
+  .paper {
+    position: relative;
+    background:
+      radial-gradient(120% 90% at 30% 20%, rgba(255, 247, 223, 0.06), transparent 60%),
+      linear-gradient(180deg, var(--paper) 0%, color-mix(in oklab, var(--paper) 92%, var(--paper-shadow)) 100%);
+    color: var(--paper-ink);
+    border: 1px solid color-mix(in oklab, var(--paper-shadow) 60%, transparent);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 18px 40px -20px rgba(0, 0, 0, 0.7),
+      0 2px 0 rgba(0, 0, 0, 0.25);
+  }
+  .paper::before {
+    /* paper grain */
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.15  0 0 0 0.12 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+    opacity: 0.6;
+    border-radius: inherit;
+  }
+  .paper::after {
+    /* vertical stripe veil (like the cover sheet over the portrait) */
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 0 6px,
+      rgba(0, 0, 0, 0.04) 6px 12px
+    );
+    border-radius: inherit;
+  }
+
+  .tape {
+    position: absolute;
+    width: 70px;
+    height: 18px;
+    background: var(--tape);
+    backdrop-filter: blur(1px);
+    border-left: 1px dashed rgba(0, 0, 0, 0.12);
+    border-right: 1px dashed rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  .tape-tl { top: -8px; left: 14px; transform: rotate(-6deg); }
+  .tape-tr { top: -8px; right: 14px; transform: rotate(5deg); }
 }

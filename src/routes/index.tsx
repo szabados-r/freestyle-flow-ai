@@ -83,20 +83,21 @@ function Index() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="display text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          AI Freestyle Trainer
+        <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+          — An AI Freestyle Atelier —
         </div>
-        <h1
-          className="display mt-2 text-5xl leading-none md:text-7xl"
-          style={{ color: accent, textShadow: `0 0 32px ${accent}80` }}
-        >
-          CYPHER
+        <h1 className="mt-3 flex items-baseline gap-3">
+          <span className="serif bling text-6xl leading-none md:text-8xl">Cypher</span>
+          <span className="display text-2xl uppercase tracking-[0.25em] text-muted-foreground md:text-3xl">
+            / Vol.&nbsp;I
+          </span>
         </h1>
+        <div className="mt-2 h-px w-32 bg-gradient-to-r from-[var(--champagne-2)] to-transparent" />
       </motion.div>
 
-      <div className="mt-6 flex items-center justify-between text-xs uppercase tracking-widest text-muted-foreground">
-        <div>
-          Step {step} / {totalSteps}
+      <div className="mt-8 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+        <div className="mono">
+          Chapter {String(step).padStart(2, "0")} · of · {String(totalSteps).padStart(2, "0")}
         </div>
         {step > 1 && (
           <button onClick={goBack} className="flex items-center gap-1 hover:text-foreground">
@@ -104,10 +105,13 @@ function Index() {
           </button>
         )}
       </div>
-      <div className="mt-2 h-1 w-full rounded-full bg-border">
+      <div className="mt-3 h-px w-full bg-border">
         <div
-          className="h-1 rounded-full transition-all"
-          style={{ width: `${(step / totalSteps) * 100}%`, background: accent }}
+          className="h-px transition-all"
+          style={{
+            width: `${(step / totalSteps) * 100}%`,
+            background: "linear-gradient(90deg, var(--champagne-4), var(--champagne-3), var(--champagne-2))",
+          }}
         />
       </div>
 
@@ -174,16 +178,15 @@ function Index() {
 
       {step === 5 && topic && (
         <Button
-          className="display mt-8 h-auto w-full py-6 text-2xl uppercase tracking-widest"
-          style={{ background: accent, color: "#0a0a0a" }}
+          className="display mt-10 h-auto w-full rounded-none border border-[var(--champagne-2)] bg-transparent py-6 text-2xl uppercase tracking-[0.35em] text-[var(--champagne-3)] hover:bg-[var(--champagne-2)]/10"
           onClick={launch}
         >
-          Drop the beat
+          <span className="bling">Drop the beat</span>
         </Button>
       )}
 
-      <footer className="mt-16 text-center text-xs text-muted-foreground">
-        Mic required. Style names are creative homages — original bars only.
+      <footer className="mono mt-16 text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+        Mic required · Style names are creative homages · Original bars only
       </footer>
     </main>
   );
@@ -191,12 +194,14 @@ function Index() {
 
 function StepTitle({ n, title, subtitle }: { n: number; title: string; subtitle?: string }) {
   return (
-    <div className="mb-5">
-      <div className="display text-xs uppercase tracking-widest text-muted-foreground">
-        Step {n}
+    <div className="mb-6">
+      <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+        Chapter {String(n).padStart(2, "0")}
       </div>
-      <h2 className="display mt-1 text-3xl">{title}</h2>
-      {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+      <h2 className="serif mt-1 text-4xl text-foreground md:text-5xl">{title}</h2>
+      {subtitle && (
+        <p className="mt-2 max-w-md text-sm italic text-muted-foreground">{subtitle}</p>
+      )}
     </div>
   );
 }
@@ -206,25 +211,38 @@ function Card({
   accent,
   onClick,
   children,
+  tape = true,
 }: {
   active?: boolean;
   accent?: string;
   onClick: () => void;
   children: React.ReactNode;
+  tape?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-lg border-2 p-4 text-left transition-all",
-        active
-          ? "bg-card"
-          : "border-border bg-card/40 hover:border-primary/60",
+        "paper group relative w-full rounded-[2px] p-5 text-left transition-all duration-300",
+        "hover:-translate-y-0.5 hover:rotate-0",
+        active ? "rotate-0 scale-[1.01]" : "rotate-[-0.4deg]",
       )}
-      style={active && accent ? { borderColor: accent, boxShadow: `0 0 24px -6px ${accent}` } : undefined}
+      style={
+        active && accent
+          ? {
+              boxShadow: `0 0 0 1px ${accent} inset, 0 18px 40px -16px ${accent}55, 0 18px 40px -20px rgba(0,0,0,0.7)`,
+            }
+          : undefined
+      }
     >
-      {children}
+      {tape && (
+        <>
+          <span className="tape tape-tl" aria-hidden />
+          <span className="tape tape-tr" aria-hidden />
+        </>
+      )}
+      <span className="relative z-[1] block">{children}</span>
     </button>
   );
 }
@@ -249,10 +267,11 @@ function StepOpponent({
               accent={s.accent}
               onClick={() => onPick({ kind: "ai", styleId: s.id })}
             >
-              <div className="display text-xl" style={{ color: active ? s.accent : undefined }}>
-                {s.name}
+              <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">
+                No. {String(STYLE_LIST.indexOf(s) + 1).padStart(2, "0")}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">{s.blurb}</div>
+              <div className="serif mt-1 text-2xl leading-tight">{s.name}</div>
+              <div className="mt-2 text-[11px] italic opacity-75">{s.blurb}</div>
             </Card>
           );
         })}
@@ -261,10 +280,9 @@ function StepOpponent({
           accent="#facc15"
           onClick={() => onPick({ kind: "versus" })}
         >
-          <div className="display text-xl" style={{ color: value?.kind === "versus" ? "#facc15" : undefined }}>
-            2-Player
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">Duet</div>
+          <div className="serif mt-1 text-2xl leading-tight">2-Player</div>
+          <div className="mt-2 text-[11px] italic opacity-75">
             Pass the phone. AI hosts and judges every bar.
           </div>
         </Card>
@@ -292,10 +310,8 @@ function StepMode({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {opts.map((o) => (
           <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="display text-xl" style={{ color: value === o.id ? accent : undefined }}>
-              {o.label}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">{o.blurb}</div>
+            <div className="serif text-2xl leading-tight">{o.label}</div>
+            <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
           </Card>
         ))}
       </div>
@@ -322,10 +338,8 @@ function StepLanguage({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {opts.map((o) => (
           <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="display text-xl" style={{ color: value === o.id ? accent : undefined }}>
-              {o.label}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">{o.blurb}</div>
+            <div className="serif text-2xl leading-tight">{o.label}</div>
+            <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
           </Card>
         ))}
       </div>
@@ -348,11 +362,9 @@ function StepLevel({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {Object.values(LEVELS).map((l) => (
           <Card key={l.id} active={value === l.id} accent={accent} onClick={() => onPick(l.id)}>
-            <div className="display text-xl" style={{ color: value === l.id ? accent : undefined }}>
-              {l.label}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">{l.blurb}</div>
-            <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <div className="serif text-2xl leading-tight">{l.label}</div>
+            <div className="mt-2 text-[11px] italic opacity-75">{l.blurb}</div>
+            <div className="mono mt-3 text-[10px] uppercase tracking-[0.3em] opacity-70">
               {l.bpm} BPM · {l.syllables}
             </div>
           </Card>
@@ -377,10 +389,8 @@ function StepTopic({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-2">
         {Object.values(TOPICS).map((t) => (
           <Card key={t.id} active={value === t.id} accent={accent} onClick={() => onPick(t.id)}>
-            <div className="display text-xl" style={{ color: value === t.id ? accent : undefined }}>
-              {t.label}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">{t.blurb}</div>
+            <div className="serif text-2xl leading-tight">{t.label}</div>
+            <div className="mt-2 text-[11px] italic opacity-75">{t.blurb}</div>
           </Card>
         ))}
       </div>
