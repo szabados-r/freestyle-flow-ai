@@ -28,11 +28,17 @@ export function CypherEngine({
   bpm,
   mode,
   maxRounds,
+  language,
+  level,
+  topic,
 }: {
   styleId: StyleId;
   bpm: number;
   mode: "practice" | "battle";
   maxRounds?: number;
+  language?: "en" | "hu";
+  level?: "easy" | "medium" | "hard";
+  topic?: "freestyle" | "pop" | "sports" | "music";
 }) {
   const navigate = useNavigate();
   const style = STYLES[styleId];
@@ -76,6 +82,9 @@ export function CypherEngine({
           previousUserBar: lastUserBarRef.current?.bar,
           previousEndWord: lastUserBarRef.current?.end,
           roundIndex: history.length,
+          language,
+          level,
+          topic,
         },
       });
       setRound({ aiBar: bar.bar, aiEndWord: bar.endWord });
@@ -92,7 +101,7 @@ export function CypherEngine({
       toast.error(e instanceof Error ? e.message : "Round failed");
       setPhase("idle");
     }
-  }, [styleId, history.length, playTts, bpm]);
+  }, [styleId, history.length, playTts, bpm, language, level, topic]);
 
   const handleMicDone = useCallback(
     async (result: MicResult) => {
@@ -112,6 +121,7 @@ export function CypherEngine({
             userBar: result.transcript,
             bpm,
             durationMs: result.durationMs,
+            language,
           },
         });
         const next = { ...round, userTranscript: result.transcript, durationMs: result.durationMs, score };
@@ -123,7 +133,7 @@ export function CypherEngine({
         setPhase("result");
       }
     },
-    [round, styleId, bpm],
+    [round, styleId, bpm, language],
   );
 
   const handleNext = useCallback(async () => {
