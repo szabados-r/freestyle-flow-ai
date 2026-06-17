@@ -104,9 +104,10 @@ export function CypherEngine({
       await playTts(bar.bar);
       // Countdown 4 beats then mic
       setPhase("countdown");
+      // ~6.4s total to give the user time to think of bars.
       for (let i = 4; i >= 1; i--) {
         setCountdown(i);
-        await new Promise((r) => setTimeout(r, (60_000 / bpm)));
+        await new Promise((r) => setTimeout(r, 1600));
       }
       setPhase("userTurn");
     } catch (e) {
