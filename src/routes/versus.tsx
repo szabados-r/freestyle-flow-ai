@@ -18,7 +18,7 @@ const search = z.object({
   go: z.coerce.boolean().optional(),
   language: z.enum(["en", "hu"]).optional(),
   level: z.enum(["easy", "medium", "hard"]).optional(),
-  topic: z.enum(["freestyle", "pop", "sports", "music"]).optional(),
+  topic: z.enum(["freestyle", "pop", "sports", "music", "whatever"]).optional(),
 });
 
 export const Route = createFileRoute("/versus")({
