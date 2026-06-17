@@ -39,7 +39,7 @@ export function VersusEngine({
   bpm,
   p1Name,
   p2Name,
-  rounds,
+  rounds: _rounds,
   language,
   level,
   topic,
