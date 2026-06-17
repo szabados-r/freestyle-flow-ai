@@ -42,7 +42,6 @@ function Index() {
   const [mode, setMode] = useState<ModeType | null>(null);
   const [styleId, setStyleId] = useState<StyleId | null>(null);
 
-  const accent = styleId ? STYLES[styleId].accent : "#facc15";
   const totalSteps = 2;
 
   const goNext = (s: number) => setStep(s);
