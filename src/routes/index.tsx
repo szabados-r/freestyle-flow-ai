@@ -322,8 +322,8 @@ function StepLevel({
   onPick,
 }: {
   accent: string;
-  value: LevelId | null;
-  onPick: (l: LevelId) => void;
+  value: string | null;
+  onPick: (l: string) => void;
 }) {
   return (
     <div>
@@ -349,20 +349,8 @@ function StepTopic({
   onPick,
 }: {
   accent: string;
-  value: TopicId | null;
-  onPick: (t: TopicId) => void;
+  value: string | null;
+  onPick: (t: string) => void;
 }) {
-  return (
-    <div>
-      <StepTitle n={5} title="Pick the topic" subtitle="Bars and rhymes will lean into this theme." />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-2">
-        {Object.values(TOPICS).map((t) => (
-          <Card key={t.id} active={value === t.id} accent={accent} onClick={() => onPick(t.id)}>
-            <div className="script text-2xl leading-tight">{t.label}</div>
-            <div className="mt-2 text-[11px] italic opacity-75">{t.blurb}</div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+  return null;
 }
