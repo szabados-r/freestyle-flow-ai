@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { BarDisplay } from "./BarDisplay";
 import { BeatIndicator } from "./BeatIndicator";
 import { MicRecorder, type MicResult } from "./MicRecorder";
-import { ScoreCard, type ScoreData } from "./ScoreCard";
+import { type ScoreData } from "./ScoreCard";
 import { Button } from "@/components/ui/button";
 import { useBeatClock } from "@/lib/beat-clock";
 import { generateBar, scoreBar, versusVerdict } from "@/lib/freestyle.functions";
@@ -15,20 +15,22 @@ import { STYLES, type StyleId } from "@/lib/styles";
 
 type Phase =
   | "idle"
-  | "intro"
-  | "introSpeaking"
+  | "aiThinking"
+  | "aiSpeaking"
   | "handoff"
   | "countdown"
   | "userTurn"
-  | "scoring"
-  | "result"
+  | "scoringAll"
   | "done";
 
+type Slot = "ai1" | "p1" | "ai2" | "p2";
+
 interface TurnEntry {
-  player: 1 | 2;
+  slot: Slot;
   bar: string;
   endWord: string;
-  score: ScoreData;
+  durationMs?: number;
+  score?: ScoreData;
 }
 
 export function VersusEngine({
@@ -45,28 +47,33 @@ export function VersusEngine({
   bpm: number;
   p1Name: string;
   p2Name: string;
-  rounds: number; // total bars (split between players)
+  rounds: number; // ignored — fixed 4-bar cycle: AI, P1, AI, P2
   language?: "en" | "hu";
   level?: "easy" | "medium" | "hard";
-  topic?: "freestyle" | "pop" | "sports" | "music";
+  topic?: "freestyle" | "pop" | "sports" | "music" | "whatever";
 }) {
   const navigate = useNavigate();
   const style = STYLES[styleId];
   const clock = useBeatClock(bpm);
   const [phase, setPhase] = useState<Phase>("idle");
-  const [turn, setTurn] = useState(0); // 0..rounds-1
+  const [slotIndex, setSlotIndex] = useState(0); // 0..3 in [ai1,p1,ai2,p2]
   const [history, setHistory] = useState<TurnEntry[]>([]);
-  const [intro, setIntro] = useState<{ bar: string; endWord: string } | null>(null);
-  const [lastEntry, setLastEntry] = useState<TurnEntry | null>(null);
   const [countdown, setCountdown] = useState(4);
   const [verdict, setVerdict] = useState<{ winner: string; recap: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const currentPlayer: 1 | 2 = (turn % 2 === 0 ? 1 : 2);
+  const totalSlots = 4;
+  const slots: Slot[] = ["ai1", "p1", "ai2", "p2"];
+  const currentSlot = slots[slotIndex];
+  const isPlayerSlot = currentSlot === "p1" || currentSlot === "p2";
+  const currentPlayer: 1 | 2 = currentSlot === "p1" ? 1 : 2;
   const currentName = currentPlayer === 1 ? p1Name : p2Name;
 
-  const p1Total = history.filter((h) => h.player === 1).reduce((s, h) => s + h.score.overall, 0);
-  const p2Total = history.filter((h) => h.player === 2).reduce((s, h) => s + h.score.overall, 0);
+  const p1Total = history
+    .filter((h) => h.slot === "p1")
+    .reduce((s, h) => s + (h.score?.overall ?? 0), 0);
+  const p2Total = history
+    .filter((h) => h.slot === "p2")
+    .reduce((s, h) => s + (h.score?.overall ?? 0), 0);
 
   const playTts = useCallback(async (text: string) => {
     try {
@@ -100,23 +107,50 @@ export function VersusEngine({
     setPhase("userTurn");
   }, [bpm]);
 
+  // Run an AI slot: generate, speak, then hand off to the next player
+  const runAiSlot = useCallback(
+    async (slot: "ai1" | "ai2") => {
+      setPhase("aiThinking");
+      try {
+        // For ai2, respond to p1's bar
+        const prevPlayerEntry =
+          slot === "ai2" ? history.find((h) => h.slot === "p1") : undefined;
+        const bar = await generateBar({
+          data: {
+            styleId,
+            previousUserBar: prevPlayerEntry?.bar,
+            previousEndWord: prevPlayerEntry?.endWord,
+            roundIndex: slot === "ai1" ? 0 : 1,
+            language,
+            level,
+            topic,
+          },
+        });
+        const entry: TurnEntry = {
+          slot,
+          bar: bar.bar,
+          endWord: bar.endWord,
+        };
+        setHistory((h) => [...h, entry]);
+        setPhase("aiSpeaking");
+        const intro =
+          slot === "ai1"
+            ? `Aight ${p1Name} versus ${p2Name}. ${p1Name} you up first.`
+            : `Not bad. ${p2Name} — your turn.`;
+        await playTts(`${intro} ${bar.bar}`);
+        setPhase("handoff");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "AI failed");
+        setPhase("idle");
+      }
+    },
+    [styleId, history, language, level, topic, p1Name, p2Name, playTts],
+  );
+
   const startBattle = useCallback(async () => {
-    try {
-      await clock.start();
-      setPhase("intro");
-      // Generate an opening "topic" bar from the host artist
-      const opener = await generateBar({
-        data: { styleId, roundIndex: 0, language, level, topic },
-      });
-      setIntro({ bar: opener.bar, endWord: opener.endWord });
-      setPhase("introSpeaking");
-      await playTts(`Aight ${p1Name} versus ${p2Name}. ${p1Name} you up first. ${opener.bar}`);
-      await runCountdown();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to start");
-      setPhase("idle");
-    }
-  }, [clock, styleId, p1Name, p2Name, playTts, runCountdown, language, level, topic]);
+    await clock.start();
+    await runAiSlot("ai1");
+  }, [clock, runAiSlot]);
 
   const handleMicDone = useCallback(
     async (result: MicResult) => {
@@ -125,65 +159,112 @@ export function VersusEngine({
         setPhase("userTurn");
         return;
       }
-      // Score against the previous bar (last entry's bar, or the intro for turn 0)
-      const prevBar = lastEntry?.bar ?? intro?.bar ?? "";
-      const prevEnd = lastEntry?.endWord ?? intro?.endWord ?? "";
-      setPhase("scoring");
-      try {
-        const score = await scoreBar({
-          data: {
-            styleId,
-            aiBar: prevBar,
-            aiEndWord: prevEnd,
-            userBar: result.transcript,
-            bpm,
-            durationMs: result.durationMs,
-            language,
-          },
-        });
-        const entry: TurnEntry = {
-          player: currentPlayer,
-          bar: result.transcript,
-          endWord: score.endWord,
-          score,
-        };
-        setLastEntry(entry);
-        setHistory((h) => [...h, entry]);
-        setPhase("result");
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Scoring failed");
-        setPhase("result");
+      const slot: Slot = currentSlot;
+      const entry: TurnEntry = {
+        slot,
+        bar: result.transcript,
+        endWord: result.transcript.trim().split(/\s+/).pop() ?? "",
+        durationMs: result.durationMs,
+      };
+      const newHistory = [...history, entry];
+      setHistory(newHistory);
+
+      // Advance
+      const nextIndex = slotIndex + 1;
+      if (nextIndex >= totalSlots) {
+        // End of battle — score everything now.
+        setPhase("scoringAll");
+        clock.stop();
+        try {
+          const ai1 = newHistory.find((h) => h.slot === "ai1");
+          const ai2 = newHistory.find((h) => h.slot === "ai2");
+          const p1 = newHistory.find((h) => h.slot === "p1");
+          const p2 = newHistory.find((h) => h.slot === "p2");
+          const [p1Score, p2Score] = await Promise.all([
+            p1 && ai1
+              ? scoreBar({
+                  data: {
+                    styleId,
+                    aiBar: ai1.bar,
+                    aiEndWord: ai1.endWord,
+                    userBar: p1.bar,
+                    bpm,
+                    durationMs: p1.durationMs,
+                    language,
+                  },
+                })
+              : Promise.resolve(null),
+            p2 && ai2
+              ? scoreBar({
+                  data: {
+                    styleId,
+                    aiBar: ai2.bar,
+                    aiEndWord: ai2.endWord,
+                    userBar: p2.bar,
+                    bpm,
+                    durationMs: p2.durationMs,
+                    language,
+                  },
+                })
+              : Promise.resolve(null),
+          ]);
+          const scoredHistory = newHistory.map((h) => {
+            if (h.slot === "p1" && p1Score) return { ...h, score: p1Score };
+            if (h.slot === "p2" && p2Score) return { ...h, score: p2Score };
+            return h;
+          });
+          setHistory(scoredHistory);
+          const p1Tot = p1Score?.overall ?? 0;
+          const p2Tot = p2Score?.overall ?? 0;
+          try {
+            const v = await versusVerdict({
+              data: {
+                styleId,
+                p1Name,
+                p2Name,
+                p1Total: p1Tot,
+                p2Total: p2Tot,
+                rounds: 2,
+              },
+            });
+            setVerdict(v);
+            void playTts(v.recap);
+          } catch {
+            setVerdict({
+              winner: p1Tot > p2Tot ? p1Name : p2Tot > p1Tot ? p2Name : "draw",
+              recap: "Stalemate. Run it back.",
+            });
+          }
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Scoring failed");
+        }
+        setPhase("done");
+        return;
+      }
+      setSlotIndex(nextIndex);
+      // If next is an AI slot, run it; otherwise show handoff to next player
+      const nextSlot = slots[nextIndex];
+      if (nextSlot === "ai2") {
+        void runAiSlot("ai2");
+      } else {
+        setPhase("handoff");
       }
     },
-    [styleId, bpm, currentPlayer, lastEntry, intro, language],
+    [
+      currentSlot,
+      slotIndex,
+      history,
+      styleId,
+      bpm,
+      language,
+      clock,
+      p1Name,
+      p2Name,
+      playTts,
+      runAiSlot,
+      slots,
+    ],
   );
-
-  const handleNext = useCallback(async () => {
-    const nextTurn = turn + 1;
-    if (nextTurn >= rounds) {
-      setPhase("done");
-      clock.stop();
-      try {
-        const v = await versusVerdict({
-          data: {
-            styleId,
-            p1Name,
-            p2Name,
-            p1Total,
-            p2Total,
-            rounds,
-          },
-        });
-        setVerdict(v);
-        void playTts(v.recap);
-      } catch {
-        setVerdict({ winner: "draw", recap: "Stalemate. Run it back." });
-      }
-      return;
-    }
-    setTurn(nextTurn);
-    setPhase("handoff");
-  }, [turn, rounds, clock, styleId, p1Name, p2Name, p1Total, p2Total, playTts]);
 
   useEffect(() => {
     return () => {
@@ -194,6 +275,7 @@ export function VersusEngine({
   }, []);
 
   const accent = style.accent;
+  const lastAiEntry = [...history].reverse().find((h) => h.slot === "ai1" || h.slot === "ai2");
 
   return (
     <div className="space-y-5">
@@ -221,48 +303,16 @@ export function VersusEngine({
             {clock.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
           <div className="text-xs text-muted-foreground">
-            Bar {Math.min(turn + 1, rounds)} / {rounds}
+            Step {Math.min(slotIndex + 1, totalSlots)} / {totalSlots}
           </div>
         </div>
       </div>
 
-      {/* Scoreboard */}
-      {history.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          <div
-            className={`rounded-lg border-2 px-4 py-3 ${
-              currentPlayer === 1 && phase !== "done" ? "bg-card" : "border-border bg-card/40"
-            }`}
-            style={currentPlayer === 1 && phase !== "done" ? { borderColor: accent } : undefined}
-          >
-            <div className="display text-[10px] uppercase tracking-widest text-muted-foreground">
-              {p1Name}
-            </div>
-            <div className="display text-3xl" style={{ color: accent }}>
-              {Math.round(p1Total)}
-            </div>
-          </div>
-          <div
-            className={`rounded-lg border-2 px-4 py-3 ${
-              currentPlayer === 2 && phase !== "done" ? "bg-card" : "border-border bg-card/40"
-            }`}
-            style={currentPlayer === 2 && phase !== "done" ? { borderColor: accent } : undefined}
-          >
-            <div className="display text-[10px] uppercase tracking-widest text-muted-foreground">
-              {p2Name}
-            </div>
-            <div className="display text-3xl" style={{ color: accent }}>
-              {Math.round(p2Total)}
-            </div>
-          </div>
-        </div>
-      )}
-
       {phase === "idle" && (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            {style.name} drops an opening bar, then {p1Name} and {p2Name} trade {rounds} bars total.
-            Pass the phone after each turn.
+            {style.name} drops a bar → {p1Name} answers → {style.name} drops again → {p2Name} closes it.
+            All four bars are judged at the end.
           </p>
           <Button
             className="display mt-4 text-lg uppercase tracking-widest"
@@ -274,17 +324,22 @@ export function VersusEngine({
         </div>
       )}
 
-      {phase === "intro" && (
+      {phase === "aiThinking" && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-5 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {style.name} is opening the cypher…
+          <Loader2 className="h-4 w-4 animate-spin" /> {style.name} is cooking…
         </div>
       )}
 
-      {intro && phase !== "intro" && (
-        <BarDisplay bar={intro.bar} endWord={intro.endWord} speaker="AI" accent={accent} />
+      {lastAiEntry && (phase === "aiSpeaking" || phase === "handoff" || phase === "countdown" || phase === "userTurn") && (
+        <BarDisplay
+          bar={lastAiEntry.bar}
+          endWord={lastAiEntry.endWord}
+          speaker="AI"
+          accent={accent}
+        />
       )}
 
-      {phase === "handoff" && (
+      {phase === "handoff" && isPlayerSlot && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -298,7 +353,7 @@ export function VersusEngine({
             {currentName}
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
-            Respond to {lastEntry ? `${lastEntry.player === 1 ? p1Name : p2Name}'s last bar` : "the opener"}
+            Respond to {style.name}'s bar above.
           </div>
           <Button
             className="display mt-5 uppercase tracking-widest"
@@ -325,7 +380,7 @@ export function VersusEngine({
         )}
       </AnimatePresence>
 
-      {(phase === "userTurn" || phase === "scoring") && (
+      {phase === "userTurn" && (
         <>
           <div className="text-center text-xs uppercase tracking-widest text-muted-foreground">
             <span style={{ color: accent }}>{currentName}</span>'s turn
@@ -338,29 +393,10 @@ export function VersusEngine({
         </>
       )}
 
-      {phase === "scoring" && (
+      {phase === "scoringAll" && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {style.name} is judging…
+          <Loader2 className="h-4 w-4 animate-spin" /> {style.name} is judging the whole battle…
         </div>
-      )}
-
-      {phase === "result" && lastEntry && (
-        <>
-          <BarDisplay
-            bar={lastEntry.bar}
-            endWord={lastEntry.endWord}
-            speaker="YOU"
-            accent={accent}
-          />
-          <ScoreCard score={lastEntry.score} accent={accent} />
-          <Button
-            className="display w-full py-5 text-lg uppercase tracking-widest"
-            style={{ background: accent, color: "#0a0a0a" }}
-            onClick={() => void handleNext()}
-          >
-            {turn + 1 >= rounds ? "See the verdict" : `Pass to ${currentPlayer === 1 ? p2Name : p1Name}`}
-          </Button>
-        </>
       )}
 
       {phase === "done" && (
@@ -377,6 +413,25 @@ export function VersusEngine({
           {verdict && (
             <p className="mt-4 italic text-foreground">"{verdict.recap}"</p>
           )}
+          <div className="mt-6 space-y-3 text-left">
+            {history.map((h, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card/60 p-3">
+                <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {h.slot === "ai1" || h.slot === "ai2"
+                    ? `${style.name} (bar ${h.slot === "ai1" ? 1 : 2})`
+                    : h.slot === "p1"
+                      ? p1Name
+                      : p2Name}
+                </div>
+                <div className="mt-1 text-sm">{h.bar}</div>
+                {h.score && (
+                  <div className="mono mt-1 text-xs" style={{ color: accent }}>
+                    {Math.round(h.score.overall)} / 100 — {h.score.feedback}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
           <div className="mt-6 flex justify-center gap-3">
             <Button variant="outline" onClick={() => navigate({ to: "/" })}>
               Home
