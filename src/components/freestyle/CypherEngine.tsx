@@ -13,7 +13,15 @@ import { useBeatClock } from "@/lib/beat-clock";
 import { generateBar, scoreBar, battleVerdict } from "@/lib/freestyle.functions";
 import { STYLES, type StyleId } from "@/lib/styles";
 
-type Phase = "idle" | "aiThinking" | "aiSpeaking" | "countdown" | "userTurn" | "scoring" | "result" | "done";
+type Phase =
+  | "idle"
+  | "aiThinking"
+  | "aiSpeaking"
+  | "countdown"
+  | "userTurn"
+  | "betweenRounds"
+  | "scoringAll"
+  | "done";
 
 interface RoundData {
   aiBar: string;
@@ -38,7 +46,7 @@ export function CypherEngine({
   maxRounds?: number;
   language?: "en" | "hu";
   level?: "easy" | "medium" | "hard";
-  topic?: "freestyle" | "pop" | "sports" | "music";
+  topic?: "freestyle" | "pop" | "sports" | "music" | "whatever";
 }) {
   const navigate = useNavigate();
   const style = STYLES[styleId];
@@ -51,8 +59,9 @@ export function CypherEngine({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastUserBarRef = useRef<{ bar: string; end: string } | undefined>(undefined);
 
+  const totalRounds = maxRounds ?? 4;
   const totalUser = history.reduce((s, r) => s + (r.score?.overall ?? 0), 0);
-  const totalAi = history.length * 70; // baseline opponent score for battle
+  const totalAi = history.length * 70; // baseline opponent score
 
   const playTts = useCallback(async (text: string) => {
     const r = await fetch("/api/tts", {
@@ -111,53 +120,63 @@ export function CypherEngine({
         setPhase("userTurn");
         return;
       }
-      setPhase("scoring");
-      try {
-        const score = await scoreBar({
-          data: {
-            styleId,
-            aiBar: round.aiBar,
-            aiEndWord: round.aiEndWord,
-            userBar: result.transcript,
-            bpm,
-            durationMs: result.durationMs,
-            language,
-          },
-        });
-        const next = { ...round, userTranscript: result.transcript, durationMs: result.durationMs, score };
-        setRound(next);
-        lastUserBarRef.current = { bar: result.transcript, end: score.endWord };
-        setPhase("result");
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Scoring failed");
-        setPhase("result");
+      const entry: RoundData = {
+        ...round,
+        userTranscript: result.transcript,
+        durationMs: result.durationMs,
+      };
+      lastUserBarRef.current = {
+        bar: result.transcript,
+        end: result.transcript.trim().split(/\s+/).pop() ?? "",
+      };
+      const newHistory = [...history, entry];
+      setHistory(newHistory);
+      setRound(null);
+      if (newHistory.length >= totalRounds) {
+        // Score everything at the end.
+        setPhase("scoringAll");
+        clock.stop();
+        try {
+          const scored = await Promise.all(
+            newHistory.map((r) =>
+              scoreBar({
+                data: {
+                  styleId,
+                  aiBar: r.aiBar,
+                  aiEndWord: r.aiEndWord,
+                  userBar: r.userTranscript ?? "",
+                  bpm,
+                  durationMs: r.durationMs,
+                  language,
+                },
+              }).then((score) => ({ ...r, score })),
+            ),
+          );
+          setHistory(scored);
+          const userTotal = scored.reduce((s, r) => s + (r.score?.overall ?? 0), 0);
+          const aiTotal = scored.length * 70;
+          try {
+            const v = await battleVerdict({
+              data: { styleId, userTotal, aiTotal, rounds: scored.length },
+            });
+            setVerdict(v);
+          } catch {
+            setVerdict({ winner: userTotal > aiTotal ? "user" : "ai", recap: "Bars traded. Run it back." });
+          }
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Scoring failed");
+        }
+        setPhase("done");
+        return;
       }
+      setPhase("betweenRounds");
     },
-    [round, styleId, bpm, language],
+    [round, styleId, bpm, language, history, totalRounds, clock],
   );
 
-  const handleNext = useCallback(async () => {
-    if (!round?.score) return;
-    const newHistory = [...history, round];
-    setHistory(newHistory);
-    setRound(null);
-    if (mode === "battle" && maxRounds && newHistory.length >= maxRounds) {
-      setPhase("done");
-      try {
-        const userTotal = newHistory.reduce((s, r) => s + (r.score?.overall ?? 0), 0);
-        const aiTotal = newHistory.length * 70;
-        const v = await battleVerdict({
-          data: { styleId, userTotal, aiTotal, rounds: newHistory.length },
-        });
-        setVerdict(v);
-      } catch {
-        setVerdict({ winner: "draw", recap: "Stalemate. Run it back." });
-      }
-      clock.stop();
-      return;
-    }
+  const handleNext = useCallback(() => {
     void runRound();
-  }, [round, history, mode, maxRounds, styleId, runRound, clock]);
+  }, [runRound]);
 
   const startCypher = useCallback(async () => {
     await clock.start();
@@ -197,37 +216,16 @@ export function CypherEngine({
           >
             {clock.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          {mode === "battle" && (
-            <div className="text-xs text-muted-foreground">
-              Round {Math.min(history.length + 1, maxRounds ?? 8)} / {maxRounds}
-            </div>
-          )}
+          <div className="text-xs text-muted-foreground">
+            Round {Math.min(history.length + 1, totalRounds)} / {totalRounds}
+          </div>
         </div>
       </div>
-
-      {mode === "battle" && history.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-border bg-card/60 px-4 py-3">
-            <div className="display text-[10px] uppercase tracking-widest text-muted-foreground">
-              You
-            </div>
-            <div className="display text-3xl" style={{ color: style.accent }}>
-              {Math.round(totalUser)}
-            </div>
-          </div>
-          <div className="rounded-lg border border-border bg-card/60 px-4 py-3">
-            <div className="display text-[10px] uppercase tracking-widest text-muted-foreground">
-              {style.name}
-            </div>
-            <div className="display text-3xl text-foreground">{totalAi}</div>
-          </div>
-        </div>
-      )}
 
       {phase === "idle" && (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Beat starts, AI drops a bar, then you spit one back. Allow mic access.
+            {totalRounds} rounds. AI drops a bar, you spit one back. Judging at the end.
           </p>
           <Button
             className="display mt-4 text-lg uppercase tracking-widest"
@@ -269,7 +267,7 @@ export function CypherEngine({
         )}
       </AnimatePresence>
 
-      {(phase === "userTurn" || phase === "scoring") && (
+      {phase === "userTurn" && (
         <MicRecorder
           active={phase === "userTurn"}
           onDone={handleMicDone}
@@ -277,33 +275,20 @@ export function CypherEngine({
         />
       )}
 
-      {phase === "scoring" && (
+      {phase === "scoringAll" && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Judging your bar…
+          <Loader2 className="h-4 w-4 animate-spin" /> {style.name} is judging the whole battle…
         </div>
       )}
 
-      {phase === "result" && round?.score && (
-        <>
-          {round.userTranscript && (
-            <BarDisplay
-              bar={round.userTranscript}
-              endWord={round.score.endWord}
-              speaker="YOU"
-              accent={style.accent}
-            />
-          )}
-          <ScoreCard score={round.score} accent={style.accent} />
-          <Button
-            className="display w-full py-5 text-lg uppercase tracking-widest"
-            style={{ background: style.accent, color: "#0a0a0a" }}
-            onClick={() => void handleNext()}
-          >
-            {mode === "battle" && maxRounds && history.length + 1 >= maxRounds
-              ? "See the verdict"
-              : "Next bar"}
-          </Button>
-        </>
+      {phase === "betweenRounds" && (
+        <Button
+          className="display w-full py-5 text-lg uppercase tracking-widest"
+          style={{ background: style.accent, color: "#0a0a0a" }}
+          onClick={handleNext}
+        >
+          Next bar ({history.length + 1} / {totalRounds})
+        </Button>
       )}
 
       {phase === "done" && (
@@ -323,6 +308,26 @@ export function CypherEngine({
           {verdict && (
             <p className="mt-4 italic text-foreground">"{verdict.recap}"</p>
           )}
+          <div className="mt-6 space-y-3 text-left">
+            {history.map((r, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card/60 p-3">
+                <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Round {i + 1}
+                </div>
+                <div className="mt-1 text-sm">
+                  <span className="opacity-70">AI:</span> {r.aiBar}
+                </div>
+                <div className="mt-1 text-sm">
+                  <span className="opacity-70">You:</span> {r.userTranscript}
+                </div>
+                {r.score && (
+                  <div className="mono mt-1 text-xs" style={{ color: style.accent }}>
+                    {Math.round(r.score.overall)} / 100 — {r.score.feedback}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
           <div className="mt-6 flex justify-center gap-3">
             <Button variant="outline" onClick={() => navigate({ to: "/" })}>
               Home
