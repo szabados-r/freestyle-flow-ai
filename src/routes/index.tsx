@@ -83,21 +83,15 @@ function Index() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mono text-[10px] uppercase tracking-[0.5em] text-[color:var(--neon-pink)]">
-          ✦ Open · Til · Late ✦
-        </div>
-        <h1 className="mt-3 flex flex-col">
+        <h1 className="flex flex-col">
           <span className="script neon text-7xl leading-none md:text-9xl">Cypher</span>
-          <span className="display mt-1 text-xl uppercase tracking-[0.5em] text-[color:var(--gold-1)] md:text-2xl">
-            ★ Gentlemen's · Mic · Club ★
-          </span>
         </h1>
         <div className="mt-3 h-px w-full bg-gradient-to-r from-[color:var(--neon-pink)] via-[color:var(--gold-1)] to-transparent" />
       </motion.div>
 
       <div className="mt-8 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
         <div className="mono">
-          Chapter {String(step).padStart(2, "0")} · of · {String(totalSteps).padStart(2, "0")}
+          Step {String(step).padStart(2, "0")} · of · {String(totalSteps).padStart(2, "0")}
         </div>
         {step > 1 && (
           <button onClick={goBack} className="flex items-center gap-1 hover:text-foreground">
@@ -198,7 +192,7 @@ function StepTitle({ n, title, subtitle }: { n: number; title: string; subtitle?
   return (
     <div className="mb-6">
       <div className="mono text-[10px] uppercase tracking-[0.4em] text-[color:var(--neon-pink)]">
-        ✦ Round {String(n).padStart(2, "0")}
+        Step {String(n).padStart(2, "0")}
       </div>
       <h2 className="script neon mt-1 text-5xl text-foreground md:text-6xl">{title}</h2>
       {subtitle && (
