@@ -36,7 +36,9 @@ function getGateway() {
 const styleIdSchema = z.enum(["drake", "future", "nicki", "thug", "magyar", "hofi", "azahriah"]);
 const languageSchema = z.enum(["en", "hu"]).optional();
 const levelSchema = z.enum(["easy", "medium", "hard"]).optional();
-const topicSchema = z.enum(["freestyle", "pop", "sports", "music"]).optional();
+const topicSchema = z
+  .enum(["freestyle", "pop", "sports", "music", "whatever"])
+  .optional();
 
 export const generateBar = createServerFn({ method: "POST" })
   .inputValidator(
@@ -80,15 +82,57 @@ RULES:
       ? `The user just rapped: "${data.previousUserBar}" (ended on "${data.previousEndWord ?? ""}"). Hit back with one bar that responds and one-ups them. This is round ${data.roundIndex + 1}.`
       : `Open the cypher. Drop your first bar to set the tone. Round ${data.roundIndex + 1}.`;
 
+    return await generateBarWithFallback(gateway, system, prompt);
+  });
+
+async function generateBarWithFallback(
+  gateway: ReturnType<typeof getGateway>,
+  system: string,
+  prompt: string,
+): Promise<{ bar: string; endWord: string }> {
+  // Try structured output first.
+  try {
     const { experimental_output } = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
       system,
       prompt,
       experimental_output: Output.object({ schema: BarSchema }),
     });
+    if (experimental_output?.bar) return experimental_output;
+  } catch {
+    // fall through to text fallback
+  }
 
-    return experimental_output;
+  // Fallback: ask for JSON in plain text and parse defensively.
+  const { text } = await generateText({
+    model: gateway("google/gemini-3-flash-preview"),
+    system: `${system}\n\nReturn ONLY raw JSON of shape {"bar": string, "endWord": string}. No prose, no code fences.`,
+    prompt,
   });
+  const cleaned = text
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start !== -1 && end !== -1) {
+    try {
+      const parsed = JSON.parse(cleaned.slice(start, end + 1));
+      if (parsed?.bar) {
+        return {
+          bar: String(parsed.bar),
+          endWord: String(parsed.endWord ?? String(parsed.bar).trim().split(/\s+/).pop() ?? ""),
+        };
+      }
+    } catch {
+      // fall through
+    }
+  }
+  // Last resort: treat the whole text as the bar.
+  const bar = cleaned.split("\n").find((l) => l.trim().length > 0) ?? cleaned;
+  const endWord = bar.trim().replace(/[.,!?"']+$/g, "").split(/\s+/).pop() ?? "";
+  return { bar: bar.trim(), endWord };
+}
 
 export const scoreBar = createServerFn({ method: "POST" })
   .inputValidator(
