@@ -89,8 +89,10 @@ export function CypherEngine({
       const bar = await generateBar({
         data: {
           styleId,
-          previousUserBar: lastUserBarRef.current?.bar,
-          previousEndWord: lastUserBarRef.current?.end,
+          // Previous user bar may still be transcribing in the background;
+          // skip rhyme-chaining rather than wait for it.
+          previousUserBar: undefined,
+          previousEndWord: undefined,
           roundIndex: history.length,
           language,
           level,
