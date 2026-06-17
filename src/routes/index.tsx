@@ -1,13 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   LEVELS,
   STYLE_LIST,
   STYLES,
+  TOPICS,
+  type LevelId,
+  type TopicId,
   type StyleId,
 } from "@/lib/styles";
 import { cn } from "@/lib/utils";
@@ -32,15 +35,49 @@ export const Route = createFileRoute("/")({
 
 type ModeType = "solo" | "battle";
 
-// System-level defaults (previously user-selectable steps).
-const DEFAULT_LEVEL: "easy" | "medium" | "hard" = "medium";
-const DEFAULT_TOPIC = "freestyle" as const;
+// System-level defaults — user-tunable via the config panel.
+const DEFAULT_LEVEL: LevelId = "medium";
+const DEFAULT_TOPIC: TopicId = "freestyle";
+const CONFIG_KEY = "cypher.systemConfig.v1";
+
+type SystemConfig = { level: LevelId; topic: TopicId };
+
+function loadConfig(): SystemConfig {
+  if (typeof window === "undefined") return { level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC };
+  try {
+    const raw = window.localStorage.getItem(CONFIG_KEY);
+    if (!raw) return { level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC };
+    const parsed = JSON.parse(raw) as Partial<SystemConfig>;
+    return {
+      level: (parsed.level && LEVELS[parsed.level as LevelId] ? parsed.level : DEFAULT_LEVEL) as LevelId,
+      topic: (parsed.topic && TOPICS[parsed.topic as TopicId] ? parsed.topic : DEFAULT_TOPIC) as TopicId,
+    };
+  } catch {
+    return { level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC };
+  }
+}
 
 function Index() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<ModeType | null>(null);
   const [styleId, setStyleId] = useState<StyleId | null>(null);
+  const [config, setConfig] = useState<SystemConfig>({ level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC });
+  const [configOpen, setConfigOpen] = useState(false);
+
+  useEffect(() => {
+    setConfig(loadConfig());
+  }, []);
+
+  const updateConfig = (patch: Partial<SystemConfig>) => {
+    setConfig((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        window.localStorage.setItem(CONFIG_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const totalSteps = 2;
 
@@ -50,7 +87,7 @@ function Index() {
   const launch = () => {
     if (!mode || !styleId) return;
     const language = STYLES[styleId].language;
-    const lvl = LEVELS[DEFAULT_LEVEL];
+    const lvl = LEVELS[config.level];
     if (mode === "battle") {
       navigate({
         to: "/versus",
@@ -58,8 +95,8 @@ function Index() {
           style: styleId,
           bpm: lvl.bpm,
           language,
-          level: DEFAULT_LEVEL,
-          topic: DEFAULT_TOPIC,
+          level: config.level,
+          topic: config.topic,
         },
       });
       return;
@@ -70,8 +107,8 @@ function Index() {
         style: styleId,
         bpm: lvl.bpm,
         language,
-        level: DEFAULT_LEVEL,
-        topic: DEFAULT_TOPIC,
+        level: config.level,
+        topic: config.topic,
       },
     });
   };
@@ -142,6 +179,13 @@ function Index() {
           )}
         </motion.section>
       </AnimatePresence>
+
+      <SystemConfigPanel
+        open={configOpen}
+        onToggle={() => setConfigOpen((v) => !v)}
+        config={config}
+        onChange={updateConfig}
+      />
 
       <footer className="mono mt-16 text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
         Mic required · Style names are creative homages · Original bars only
