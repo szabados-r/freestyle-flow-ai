@@ -114,3 +114,77 @@ export const BPM_OPTIONS = [
   { label: "Mid", bpm: 85 },
   { label: "Fast", bpm: 95 },
 ];
+
+export type LevelId = "easy" | "medium" | "hard";
+
+export interface Level {
+  id: LevelId;
+  label: string;
+  bpm: number;
+  syllables: string;
+  complexity: string;
+  blurb: string;
+}
+
+export const LEVELS: Record<LevelId, Level> = {
+  easy: {
+    id: "easy",
+    label: "Easy",
+    bpm: 75,
+    syllables: "6-8 syllables",
+    complexity: "simple, common words. single-syllable end rhymes.",
+    blurb: "Slow tempo, short bars, easy rhymes.",
+  },
+  medium: {
+    id: "medium",
+    label: "Medium",
+    bpm: 85,
+    syllables: "8-12 syllables",
+    complexity: "everyday vocabulary, occasional internal rhyme.",
+    blurb: "Standard tempo, mid-length bars.",
+  },
+  hard: {
+    id: "hard",
+    label: "Hard",
+    bpm: 95,
+    syllables: "12-16 syllables",
+    complexity: "advanced vocabulary, multisyllabic rhymes, dense wordplay.",
+    blurb: "Fast tempo, long dense bars, complex rhymes.",
+  },
+};
+
+export type TopicId = "freestyle" | "pop" | "sports" | "music";
+
+export interface Topic {
+  id: TopicId;
+  label: string;
+  blurb: string;
+  prompt: string;
+}
+
+export const TOPICS: Record<TopicId, Topic> = {
+  freestyle: {
+    id: "freestyle",
+    label: "Freestyle",
+    blurb: "Anything goes — brags, flexes, wordplay.",
+    prompt: "any topic — classic freestyle brags, flexes, wordplay.",
+  },
+  pop: {
+    id: "pop",
+    label: "Pop Culture",
+    blurb: "Celebs, movies, memes, trends.",
+    prompt: "pop culture — reference celebrities, movies, TV shows, memes, internet trends.",
+  },
+  sports: {
+    id: "sports",
+    label: "Sports",
+    blurb: "Hoops, soccer, athletes, trophies.",
+    prompt: "sports — reference basketball, soccer, football, athletes, championships, sneakers.",
+  },
+  music: {
+    id: "music",
+    label: "Music",
+    blurb: "Beats, studios, rappers, charts.",
+    prompt: "music industry — reference beats, studios, producers, rappers, charts, tours, vinyl.",
+  },
+};
