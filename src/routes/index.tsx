@@ -33,35 +33,32 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Opponent = { kind: "ai"; styleId: StyleId } | { kind: "versus" };
-type ModeType = "practice" | "battle";
+type ModeType = "solo" | "battle";
 type Lang = "en" | "hu";
 
 function Index() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [opponent, setOpponent] = useState<Opponent | null>(null);
   const [mode, setMode] = useState<ModeType | null>(null);
+  const [styleId, setStyleId] = useState<StyleId | null>(null);
   const [language, setLanguage] = useState<Lang | null>(null);
   const [level, setLevel] = useState<LevelId | null>(null);
   const [topic, setTopic] = useState<TopicId | null>(null);
 
-  const accent =
-    opponent?.kind === "ai" ? STYLES[opponent.styleId].accent : "#facc15";
-
-  const totalSteps = opponent?.kind === "versus" ? 4 : 5; // skip mode step for versus
+  const accent = styleId ? STYLES[styleId].accent : "#facc15";
+  const totalSteps = 5;
 
   const goNext = (s: number) => setStep(s);
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   const launch = () => {
-    if (!opponent || !language || !level || !topic) return;
+    if (!mode || !styleId || !language || !level || !topic) return;
     const lvl = LEVELS[level];
-    if (opponent.kind === "versus") {
+    if (mode === "battle") {
       navigate({
         to: "/versus",
         search: {
-          style: "drake",
+          style: styleId,
           bpm: lvl.bpm,
           language,
           level,
@@ -70,14 +67,10 @@ function Index() {
       });
       return;
     }
-    const base = {
-      style: opponent.styleId,
-      bpm: lvl.bpm,
-      language,
-      level,
-      topic,
-    } as const;
-    navigate({ to: mode === "battle" ? "/battle" : "/practice", search: base });
+    navigate({
+      to: "/battle",
+      search: { style: styleId, bpm: lvl.bpm, language, level, topic },
+    });
   };
 
   return (
@@ -120,21 +113,20 @@ function Index() {
           className="mt-8"
         >
           {step === 1 && (
-            <StepOpponent
-              value={opponent}
-              onPick={(o) => {
-                setOpponent(o);
-                // Versus skips the mode step; go to language
-                goNext(o.kind === "versus" ? 3 : 2);
+            <StepMode
+              value={mode}
+              onPick={(m) => {
+                setMode(m);
+                goNext(2);
               }}
             />
           )}
           {step === 2 && (
-            <StepMode
-              accent={accent}
-              value={mode}
-              onPick={(m) => {
-                setMode(m);
+            <StepRapper
+              mode={mode}
+              value={styleId}
+              onPick={(s) => {
+                setStyleId(s);
                 goNext(3);
               }}
             />
@@ -238,71 +230,72 @@ function Card({
   );
 }
 
-function StepOpponent({
+function StepMode({
   value,
   onPick,
 }: {
-  value: Opponent | null;
-  onPick: (o: Opponent) => void;
+  value: ModeType | null;
+  onPick: (m: ModeType) => void;
 }) {
+  const opts: { id: ModeType; label: string; blurb: string; accent: string }[] = [
+    {
+      id: "solo",
+      label: "Vs Rapper",
+      blurb: "You against the selected AI rapper. Trade bars, judged at the end.",
+      accent: "#ff2d9c",
+    },
+    {
+      id: "battle",
+      label: "2-Player Battle",
+      blurb: "Pass the phone. AI rapper opens, you and a friend trade back. Judged at the end.",
+      accent: "#facc15",
+    },
+  ];
   return (
     <div>
-      <StepTitle n={1} title="Pick your opponent" subtitle="Battle an AI rapper or pass the phone with a friend." />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {STYLE_LIST.map((s) => {
-          const active = value?.kind === "ai" && value.styleId === s.id;
-          return (
-            <Card
-              key={s.id}
-              active={active}
-              accent={s.accent}
-              onClick={() => onPick({ kind: "ai", styleId: s.id })}
-            >
-              <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">
-                No. {String(STYLE_LIST.indexOf(s) + 1).padStart(2, "0")}
-              </div>
-              <div className="script mt-1 text-2xl leading-tight">{s.name}</div>
-              <div className="mt-2 text-[11px] italic opacity-75">{s.blurb}</div>
-            </Card>
-          );
-        })}
-        <Card
-          active={value?.kind === "versus"}
-          accent="#facc15"
-          onClick={() => onPick({ kind: "versus" })}
-        >
-          <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">Duet</div>
-          <div className="script mt-1 text-2xl leading-tight">2-Player</div>
-          <div className="mt-2 text-[11px] italic opacity-75">
-            Pass the phone. AI hosts and judges every bar.
-          </div>
-        </Card>
+      <StepTitle n={1} title="Pick your mode" subtitle="Solo vs the AI, or 2-player with an AI host." />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {opts.map((o) => (
+          <Card key={o.id} active={value === o.id} accent={o.accent} onClick={() => onPick(o.id)}>
+            <div className="script text-2xl leading-tight">{o.label}</div>
+            <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
+          </Card>
+        ))}
       </div>
     </div>
   );
 }
 
-function StepMode({
-  accent,
+function StepRapper({
+  mode,
   value,
   onPick,
 }: {
-  accent: string;
-  value: ModeType | null;
-  onPick: (m: ModeType) => void;
+  mode: ModeType | null;
+  value: StyleId | null;
+  onPick: (s: StyleId) => void;
 }) {
-  const opts: { id: ModeType; label: string; blurb: string }[] = [
-    { id: "practice", label: "Practice", blurb: "Endless single-bar trading. Warm up your flow." },
-    { id: "battle", label: "Battle · 8 bars", blurb: "Trade 8 bars. Final verdict in the rapper's voice." },
-  ];
+  const title = mode === "battle" ? "Pick the host" : "Pick your opponent";
+  const subtitle =
+    mode === "battle"
+      ? "This AI rapper opens the cypher and trades bars between players."
+      : "The AI rapper you'll battle.";
   return (
     <div>
-      <StepTitle n={2} title="Pick your mode" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {opts.map((o) => (
-          <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="script text-2xl leading-tight">{o.label}</div>
-            <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
+      <StepTitle n={2} title={title} subtitle={subtitle} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {STYLE_LIST.map((s) => (
+          <Card
+            key={s.id}
+            active={value === s.id}
+            accent={s.accent}
+            onClick={() => onPick(s.id)}
+          >
+            <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">
+              No. {String(STYLE_LIST.indexOf(s) + 1).padStart(2, "0")}
+            </div>
+            <div className="script mt-1 text-2xl leading-tight">{s.name}</div>
+            <div className="mt-2 text-[11px] italic opacity-75">{s.blurb}</div>
           </Card>
         ))}
       </div>
