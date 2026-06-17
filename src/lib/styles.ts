@@ -28,7 +28,7 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     vibe: "melodic, half-sung, reflective, late-night",
     cadence: "smooth triplets, occasional sing-rap, end words held",
     adlibs: ["yeah", "you know", "girl"],
-    voiceId: "nPczCjzI2devNBz1zQrb", // Brian
+    voiceId: "P3TGjm2n0VMOjnMS0QR5", // custom Drake clone
     accent: "#f0abfc",
     language: "en",
     languageLabel: "English",
@@ -88,7 +88,7 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     vibe: "magyar drill, sötét hangulat, nyers utcai energia, hideg flex",
     cadence: "lassú drill kadencia, súlyos végrímek, szaggatott flow",
     adlibs: ["yo", "beton", "ah"],
-    voiceId: "JBFqnCBsd6RMkjVDRZzb",
+    voiceId: "r2ej5ZQWgnB9OsNnW1ey", // custom Beton Hofi clone
     accent: "#9ca3af",
     language: "hu",
     languageLabel: "Magyar",
