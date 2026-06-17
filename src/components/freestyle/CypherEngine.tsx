@@ -110,6 +110,8 @@ export function CypherEngine({
         await new Promise((r) => setTimeout(r, 1600));
       }
       setPhase("userTurn");
+      // Duck the beat hard so the mic mostly picks up the user's voice.
+      clock.setVolume(0.08);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Round failed");
       setPhase("idle");
@@ -128,6 +130,8 @@ export function CypherEngine({
       const newHistory = [...history, entry];
       const idx = newHistory.length - 1;
       pendingRef.current.set(idx, result.transcriptPromise);
+      // Restore beat volume now that the mic is closed.
+      clock.setVolume(0.45);
       // Resolve in the background and patch the entry when ready.
       void result.transcriptPromise.then((text) => {
         setHistory((h) =>
