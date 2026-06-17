@@ -108,7 +108,8 @@ export function VersusEngine({
       await new Promise((r) => setTimeout(r, 1600));
     }
     setPhase("userTurn");
-  }, [bpm]);
+    clock.setVolume(0.08);
+  }, [bpm, clock]);
 
   // Run an AI slot: generate, speak, then hand off to the next player
   const runAiSlot = useCallback(
@@ -170,6 +171,7 @@ export function VersusEngine({
       const newHistory = [...history, entry];
       const idx = newHistory.length - 1;
       pendingRef.current.set(idx, result.transcriptPromise);
+      clock.setVolume(0.45);
       void result.transcriptPromise.then((text) => {
         setHistory((h) =>
           h.map((t, i) =>
