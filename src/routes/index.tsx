@@ -280,6 +280,129 @@ function StepMode({
   );
 }
 
+function SystemConfigPanel({
+  open,
+  onToggle,
+  config,
+  onChange,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  config: SystemConfig;
+  onChange: (patch: Partial<SystemConfig>) => void;
+}) {
+  const levelOrder: LevelId[] = ["easy", "medium", "hard"];
+  const topicOrder: TopicId[] = ["freestyle", "pop", "sports", "music", "whatever"];
+  const currentLevel = LEVELS[config.level];
+  const currentTopic = TOPICS[config.topic];
+
+  return (
+    <div className="mt-12 border-t border-border pt-6">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="mono flex w-full items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <Settings2 className="h-3 w-3" />
+          System Config
+        </span>
+        <span className="opacity-70">
+          {currentLevel.label} · {currentLevel.bpm} BPM · {currentTopic.label}
+          <span className="ml-3">{open ? "—" : "+"}</span>
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-6 space-y-6">
+              <div>
+                <div className="mono mb-2 text-[10px] uppercase tracking-[0.3em] text-[color:var(--neon-pink)]">
+                  Level &amp; tempo
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {levelOrder.map((id) => {
+                    const l = LEVELS[id];
+                    const active = config.level === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => onChange({ level: id })}
+                        className={cn(
+                          "velvet rounded-[3px] p-3 text-left transition-all",
+                          active ? "scale-[1.02]" : "opacity-70 hover:opacity-100",
+                        )}
+                        style={
+                          active
+                            ? {
+                                borderColor: "var(--neon-pink)",
+                                boxShadow:
+                                  "0 0 0 1px var(--neon-pink) inset, 0 0 18px rgba(255,45,156,0.45)",
+                              }
+                            : undefined
+                        }
+                      >
+                        <div className="script text-xl leading-none">{l.label}</div>
+                        <div className="mono mt-1 text-[10px] uppercase tracking-[0.2em] opacity-70">
+                          {l.bpm} BPM
+                        </div>
+                        <div className="mt-1 text-[11px] italic opacity-75">{l.blurb}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="mono mb-2 text-[10px] uppercase tracking-[0.3em] text-[color:var(--neon-pink)]">
+                  Topic
+                </div>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+                  {topicOrder.map((id) => {
+                    const t = TOPICS[id];
+                    const active = config.topic === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => onChange({ topic: id })}
+                        className={cn(
+                          "velvet rounded-[3px] p-3 text-left transition-all",
+                          active ? "scale-[1.02]" : "opacity-70 hover:opacity-100",
+                        )}
+                        style={
+                          active
+                            ? {
+                                borderColor: "var(--gold-1)",
+                                boxShadow:
+                                  "0 0 0 1px var(--gold-1) inset, 0 0 18px rgba(250,204,21,0.4)",
+                              }
+                            : undefined
+                        }
+                      >
+                        <div className="script text-lg leading-none">{t.label}</div>
+                        <div className="mt-1 text-[11px] italic opacity-75">{t.blurb}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function StepRapper({
   mode,
   value,
