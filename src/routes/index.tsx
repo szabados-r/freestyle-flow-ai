@@ -83,16 +83,16 @@ function Index() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
-          — An AI Freestyle Atelier —
+        <div className="mono text-[10px] uppercase tracking-[0.5em] text-[color:var(--neon-pink)]">
+          ✦ Open · Til · Late ✦
         </div>
-        <h1 className="mt-3 flex items-baseline gap-3">
-          <span className="script neon-gold text-6xl leading-none md:text-8xl">Cypher</span>
-          <span className="display text-2xl uppercase tracking-[0.25em] text-muted-foreground md:text-3xl">
-            / Vol.&nbsp;I
+        <h1 className="mt-3 flex flex-col">
+          <span className="script neon text-7xl leading-none md:text-9xl">Cypher</span>
+          <span className="display mt-1 text-xl uppercase tracking-[0.5em] text-[color:var(--gold-1)] md:text-2xl">
+            ★ Gentlemen's · Mic · Club ★
           </span>
         </h1>
-        <div className="mt-2 h-px w-32 bg-gradient-to-r from-[var(--champagne-2)] to-transparent" />
+        <div className="mt-3 h-px w-full bg-gradient-to-r from-[color:var(--neon-pink)] via-[color:var(--gold-1)] to-transparent" />
       </motion.div>
 
       <div className="mt-8 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
@@ -110,7 +110,8 @@ function Index() {
           className="h-px transition-all"
           style={{
             width: `${(step / totalSteps) * 100}%`,
-            background: "linear-gradient(90deg, var(--champagne-4), var(--champagne-3), var(--champagne-2))",
+            background: "linear-gradient(90deg, var(--neon-pink), var(--neon-magenta), var(--gold-1))",
+            boxShadow: "0 0 12px var(--neon-pink)",
           }}
         />
       </div>
@@ -178,10 +179,11 @@ function Index() {
 
       {step === 5 && topic && (
         <Button
-          className="display mt-10 h-auto w-full rounded-none border border-[var(--champagne-2)] bg-transparent py-6 text-2xl uppercase tracking-[0.35em] text-[var(--champagne-3)] hover:bg-[var(--champagne-2)]/10"
+          className="display mt-10 h-auto w-full rounded-none border-2 border-[color:var(--neon-pink)] bg-transparent py-6 text-3xl uppercase tracking-[0.4em] hover:bg-[color:var(--neon-pink)]/15"
+          style={{ boxShadow: "0 0 24px var(--neon-pink), inset 0 0 18px rgba(255,45,156,0.25)" }}
           onClick={launch}
         >
-          <span className="neon-gold">Drop the beat</span>
+          <span className="neon">Drop the beat</span>
         </Button>
       )}
 
@@ -195,10 +197,10 @@ function Index() {
 function StepTitle({ n, title, subtitle }: { n: number; title: string; subtitle?: string }) {
   return (
     <div className="mb-6">
-      <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
-        Chapter {String(n).padStart(2, "0")}
+      <div className="mono text-[10px] uppercase tracking-[0.4em] text-[color:var(--neon-pink)]">
+        ✦ Round {String(n).padStart(2, "0")}
       </div>
-      <h2 className="script mt-1 text-4xl text-foreground md:text-5xl">{title}</h2>
+      <h2 className="script neon mt-1 text-5xl text-foreground md:text-6xl">{title}</h2>
       {subtitle && (
         <p className="mt-2 max-w-md text-sm italic text-muted-foreground">{subtitle}</p>
       )}
@@ -211,7 +213,7 @@ function Card({
   accent,
   onClick,
   children,
-  tape = true,
+  tape: _tape = false,
 }: {
   active?: boolean;
   accent?: string;
@@ -224,24 +226,19 @@ function Card({
       type="button"
       onClick={onClick}
       className={cn(
-        "velvet group relative w-full rounded-[2px] p-5 text-left transition-all duration-300",
-        "hover:-translate-y-0.5 hover:rotate-0",
-        active ? "rotate-0 scale-[1.01]" : "rotate-[-0.4deg]",
+        "velvet group relative w-full rounded-[3px] p-5 text-left text-foreground transition-all duration-300",
+        "hover:-translate-y-0.5",
+        active ? "scale-[1.02]" : "",
       )}
       style={
         active && accent
           ? {
-              boxShadow: `0 0 0 1px ${accent} inset, 0 18px 40px -16px ${accent}55, 0 18px 40px -20px rgba(0,0,0,0.7)`,
+              borderColor: accent,
+              boxShadow: `0 0 0 1px ${accent} inset, 0 0 24px ${accent}99, 0 18px 40px -16px ${accent}66`,
             }
           : undefined
       }
     >
-      {tape && (
-        <>
-          <span className="tape tape-tl" aria-hidden />
-          <span className="tape tape-tr" aria-hidden />
-        </>
-      )}
       <span className="relative z-[1] block">{children}</span>
     </button>
   );
