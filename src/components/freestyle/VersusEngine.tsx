@@ -117,11 +117,13 @@ export function VersusEngine({
         // For ai2, respond to p1's bar
         const prevPlayerEntry =
           slot === "ai2" ? history.find((h) => h.slot === "p1") : undefined;
+        const prevBar = prevPlayerEntry?.pending ? undefined : prevPlayerEntry?.bar;
+        const prevEnd = prevPlayerEntry?.pending ? undefined : prevPlayerEntry?.endWord;
         const bar = await generateBar({
           data: {
             styleId,
-            previousUserBar: prevPlayerEntry?.bar,
-            previousEndWord: prevPlayerEntry?.endWord,
+            previousUserBar: prevBar,
+            previousEndWord: prevEnd,
             roundIndex: slot === "ai1" ? 0 : 1,
             language,
             level,
