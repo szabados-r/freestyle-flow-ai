@@ -423,6 +423,8 @@ export function VersusEngine({
             active={phase === "userTurn"}
             onDone={handleMicDone}
             accent={accent}
+            language={language}
+            prompt={lastAiEntry?.bar}
           />
         </>
       )}
