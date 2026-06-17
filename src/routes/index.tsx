@@ -87,7 +87,7 @@ function Index() {
           — An AI Freestyle Atelier —
         </div>
         <h1 className="mt-3 flex items-baseline gap-3">
-          <span className="serif bling text-6xl leading-none md:text-8xl">Cypher</span>
+          <span className="script neon-gold text-6xl leading-none md:text-8xl">Cypher</span>
           <span className="display text-2xl uppercase tracking-[0.25em] text-muted-foreground md:text-3xl">
             / Vol.&nbsp;I
           </span>
@@ -181,7 +181,7 @@ function Index() {
           className="display mt-10 h-auto w-full rounded-none border border-[var(--champagne-2)] bg-transparent py-6 text-2xl uppercase tracking-[0.35em] text-[var(--champagne-3)] hover:bg-[var(--champagne-2)]/10"
           onClick={launch}
         >
-          <span className="bling">Drop the beat</span>
+          <span className="neon-gold">Drop the beat</span>
         </Button>
       )}
 
@@ -198,7 +198,7 @@ function StepTitle({ n, title, subtitle }: { n: number; title: string; subtitle?
       <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
         Chapter {String(n).padStart(2, "0")}
       </div>
-      <h2 className="serif mt-1 text-4xl text-foreground md:text-5xl">{title}</h2>
+      <h2 className="script mt-1 text-4xl text-foreground md:text-5xl">{title}</h2>
       {subtitle && (
         <p className="mt-2 max-w-md text-sm italic text-muted-foreground">{subtitle}</p>
       )}
@@ -224,7 +224,7 @@ function Card({
       type="button"
       onClick={onClick}
       className={cn(
-        "paper group relative w-full rounded-[2px] p-5 text-left transition-all duration-300",
+        "velvet group relative w-full rounded-[2px] p-5 text-left transition-all duration-300",
         "hover:-translate-y-0.5 hover:rotate-0",
         active ? "rotate-0 scale-[1.01]" : "rotate-[-0.4deg]",
       )}
@@ -270,7 +270,7 @@ function StepOpponent({
               <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">
                 No. {String(STYLE_LIST.indexOf(s) + 1).padStart(2, "0")}
               </div>
-              <div className="serif mt-1 text-2xl leading-tight">{s.name}</div>
+              <div className="script mt-1 text-2xl leading-tight">{s.name}</div>
               <div className="mt-2 text-[11px] italic opacity-75">{s.blurb}</div>
             </Card>
           );
@@ -281,7 +281,7 @@ function StepOpponent({
           onClick={() => onPick({ kind: "versus" })}
         >
           <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">Duet</div>
-          <div className="serif mt-1 text-2xl leading-tight">2-Player</div>
+          <div className="script mt-1 text-2xl leading-tight">2-Player</div>
           <div className="mt-2 text-[11px] italic opacity-75">
             Pass the phone. AI hosts and judges every bar.
           </div>
@@ -310,7 +310,7 @@ function StepMode({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {opts.map((o) => (
           <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="serif text-2xl leading-tight">{o.label}</div>
+            <div className="script text-2xl leading-tight">{o.label}</div>
             <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
           </Card>
         ))}
@@ -338,7 +338,7 @@ function StepLanguage({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {opts.map((o) => (
           <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="serif text-2xl leading-tight">{o.label}</div>
+            <div className="script text-2xl leading-tight">{o.label}</div>
             <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
           </Card>
         ))}
@@ -362,7 +362,7 @@ function StepLevel({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {Object.values(LEVELS).map((l) => (
           <Card key={l.id} active={value === l.id} accent={accent} onClick={() => onPick(l.id)}>
-            <div className="serif text-2xl leading-tight">{l.label}</div>
+            <div className="script text-2xl leading-tight">{l.label}</div>
             <div className="mt-2 text-[11px] italic opacity-75">{l.blurb}</div>
             <div className="mono mt-3 text-[10px] uppercase tracking-[0.3em] opacity-70">
               {l.bpm} BPM · {l.syllables}
@@ -389,7 +389,7 @@ function StepTopic({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-2">
         {Object.values(TOPICS).map((t) => (
           <Card key={t.id} active={value === t.id} accent={accent} onClick={() => onPick(t.id)}>
-            <div className="serif text-2xl leading-tight">{t.label}</div>
+            <div className="script text-2xl leading-tight">{t.label}</div>
             <div className="mt-2 text-[11px] italic opacity-75">{t.blurb}</div>
           </Card>
         ))}
