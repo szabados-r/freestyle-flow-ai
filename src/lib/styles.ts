@@ -153,7 +153,7 @@ export const LEVELS: Record<LevelId, Level> = {
   },
 };
 
-export type TopicId = "freestyle" | "pop" | "sports" | "music";
+export type TopicId = "freestyle" | "pop" | "sports" | "music" | "whatever";
 
 export interface Topic {
   id: TopicId;
@@ -186,5 +186,11 @@ export const TOPICS: Record<TopicId, Topic> = {
     label: "Music",
     blurb: "Beats, studios, rappers, charts.",
     prompt: "music industry — reference beats, studios, producers, rappers, charts, tours, vinyl.",
+  },
+  whatever: {
+    id: "whatever",
+    label: "Whatever",
+    blurb: "No theme — let the AI go wherever it wants.",
+    prompt: "no fixed topic — drift between subjects, get weird, follow whatever the previous bar suggests.",
   },
 };
