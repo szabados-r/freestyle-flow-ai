@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { BarDisplay } from "./BarDisplay";
 import { BeatIndicator } from "./BeatIndicator";
 import { MicRecorder, type MicResult } from "./MicRecorder";
-import { ScoreCard, type ScoreData } from "./ScoreCard";
+import { type ScoreData } from "./ScoreCard";
 import { Button } from "@/components/ui/button";
 import { useBeatClock } from "@/lib/beat-clock";
 import { generateBar, scoreBar, battleVerdict } from "@/lib/freestyle.functions";
