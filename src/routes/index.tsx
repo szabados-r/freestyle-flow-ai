@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Settings2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   LEVELS,
   STYLE_LIST,
