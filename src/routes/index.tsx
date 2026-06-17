@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 
@@ -31,7 +31,6 @@ export const Route = createFileRoute("/")({
 });
 
 type ModeType = "solo" | "battle";
-type Lang = "en" | "hu";
 
 // System-level defaults (previously user-selectable steps).
 const DEFAULT_LEVEL: "easy" | "medium" | "hard" = "medium";
@@ -42,16 +41,15 @@ function Index() {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<ModeType | null>(null);
   const [styleId, setStyleId] = useState<StyleId | null>(null);
-  const [language, setLanguage] = useState<Lang | null>(null);
 
-  const accent = styleId ? STYLES[styleId].accent : "#facc15";
-  const totalSteps = 3;
+  const totalSteps = 2;
 
   const goNext = (s: number) => setStep(s);
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   const launch = () => {
-    if (!mode || !styleId || !language) return;
+    if (!mode || !styleId) return;
+    const language = STYLES[styleId].language;
     const lvl = LEVELS[DEFAULT_LEVEL];
     if (mode === "battle") {
       navigate({
@@ -77,6 +75,13 @@ function Index() {
       },
     });
   };
+
+  useEffect(() => {
+    if (step === 2 && mode && styleId) {
+      launch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styleId]);
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
@@ -132,31 +137,11 @@ function Index() {
               value={styleId}
               onPick={(s) => {
                 setStyleId(s);
-                goNext(3);
-              }}
-            />
-          )}
-          {step === 3 && (
-            <StepLanguage
-              accent={accent}
-              value={language}
-              onPick={(l) => {
-                setLanguage(l);
               }}
             />
           )}
         </motion.section>
       </AnimatePresence>
-
-      {step === 3 && language && (
-        <Button
-          className="display mt-10 h-auto w-full rounded-none border-2 border-[color:var(--neon-pink)] bg-transparent py-6 text-3xl uppercase tracking-[0.4em] hover:bg-[color:var(--neon-pink)]/15"
-          style={{ boxShadow: "0 0 24px var(--neon-pink), inset 0 0 18px rgba(255,45,156,0.25)" }}
-          onClick={launch}
-        >
-          <span className="neon">Drop the beat</span>
-        </Button>
-      )}
 
       <footer className="mono mt-16 text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
         Mic required · Style names are creative homages · Original bars only
@@ -287,32 +272,3 @@ function StepRapper({
     </div>
   );
 }
-
-function StepLanguage({
-  accent,
-  value,
-  onPick,
-}: {
-  accent: string;
-  value: Lang | null;
-  onPick: (l: Lang) => void;
-}) {
-  const opts: { id: Lang; label: string; blurb: string }[] = [
-    { id: "en", label: "English", blurb: "AI writes and judges bars in English." },
-    { id: "hu", label: "Magyar", blurb: "AI magyarul ír és értékel." },
-  ];
-  return (
-    <div>
-      <StepTitle n={3} title="Pick the language" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {opts.map((o) => (
-          <Card key={o.id} active={value === o.id} accent={accent} onClick={() => onPick(o.id)}>
-            <div className="script text-2xl leading-tight">{o.label}</div>
-            <div className="mt-2 text-[11px] italic opacity-75">{o.blurb}</div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
