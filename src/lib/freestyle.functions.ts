@@ -179,15 +179,58 @@ User bar: "${data.userBar}"
 
 Score it.`;
 
+    return await scoreBarWithFallback(gateway, system, prompt);
+  });
+
+function clamp(n: unknown, min: number, max: number, fallback: number): number {
+  const v = typeof n === "number" ? n : Number(n);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.max(min, Math.min(max, v));
+}
+
+async function scoreBarWithFallback(
+  gateway: ReturnType<typeof getGateway>,
+  system: string,
+  prompt: string,
+): Promise<z.infer<typeof ScoreSchema>> {
+  try {
     const { experimental_output } = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
       system,
       prompt,
       experimental_output: Output.object({ schema: ScoreSchema }),
     });
+    if (experimental_output) return experimental_output;
+  } catch {
+    // fall through
+  }
 
-    return experimental_output;
+  const { text } = await generateText({
+    model: gateway("google/gemini-3-flash-preview"),
+    system: `${system}\n\nReturn ONLY raw JSON: {"rhyme":0-10,"flow":0-10,"onBeat":0-10,"styleFit":0-10,"overall":0-100,"endWord":string,"feedback":string}. No prose, no code fences.`,
+    prompt,
   });
+  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  let parsed: Record<string, unknown> = {};
+  if (start !== -1 && end !== -1) {
+    try {
+      parsed = JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      // ignore
+    }
+  }
+  return {
+    rhyme: clamp(parsed.rhyme, 0, 10, 6),
+    flow: clamp(parsed.flow, 0, 10, 6),
+    onBeat: clamp(parsed.onBeat, 0, 10, 6),
+    styleFit: clamp(parsed.styleFit, 0, 10, 6),
+    overall: clamp(parsed.overall, 0, 100, 65),
+    endWord: String(parsed.endWord ?? ""),
+    feedback: String(parsed.feedback ?? "Solid bar — keep it pushing."),
+  };
+}
 
 export const battleVerdict = createServerFn({ method: "POST" })
   .inputValidator(
