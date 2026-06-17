@@ -1,4 +1,3 @@
-import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { Mic, MicOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -6,7 +5,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 export interface MicResult {
-  transcript: string;
+  /** Resolves to the transcribed text once the server returns. */
+  transcriptPromise: Promise<string>;
   durationMs: number;
 }
 
@@ -14,72 +14,94 @@ export function MicRecorder({
   active,
   onDone,
   accent,
+  language,
 }: {
   active: boolean;
   onDone: (r: MicResult) => void;
   accent: string;
+  language?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const startTimeRef = useRef<number>(0);
-  const finalRef = useRef<string>("");
-  const partialRef = useRef<string>("");
-
-  const scribe = useScribe({
-    modelId: "scribe_v2_realtime",
-    commitStrategy: CommitStrategy.VAD,
-    onPartialTranscript: (data: { text: string }) => {
-      partialRef.current = data.text ?? "";
-    },
-    onCommittedTranscript: (data: { text: string }) => {
-      finalRef.current = (finalRef.current + " " + data.text).trim();
-      partialRef.current = "";
-    },
-  });
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
 
   const start = useCallback(async () => {
     setError(null);
-    finalRef.current = "";
-    partialRef.current = "";
+    chunksRef.current = [];
     try {
-      const res = await fetch("/api/scribe-token", { method: "POST" });
-      if (!res.ok) throw new Error("token failed");
-      const { token } = (await res.json()) as { token: string };
-      await scribe.connect({
-        token,
-        microphone: { echoCancellation: true, noiseSuppression: true },
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
+      streamRef.current = stream;
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : "";
+      const rec = mime
+        ? new MediaRecorder(stream, { mimeType: mime })
+        : new MediaRecorder(stream);
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorderRef.current = rec;
+      rec.start(250);
       startTimeRef.current = performance.now();
       setRecording(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "mic failed");
     }
-  }, [scribe]);
+  }, []);
 
-  const stop = useCallback(async () => {
+  const stop = useCallback(() => {
     const dur = performance.now() - startTimeRef.current;
+    const rec = recorderRef.current;
+    if (!rec) return;
     setRecording(false);
-    // Force-finalize any in-progress segment before tearing down.
-    try {
-      scribe.commit?.();
-    } catch {
-      // ignore
-    }
-    // Wait for the commit event to land, then disconnect.
-    await new Promise((r) => setTimeout(r, 600));
-    try {
-      await scribe.disconnect();
-    } catch {
-      // ignore
-    }
-    // Fall back to the latest partial if nothing got committed.
-    const text = (finalRef.current || partialRef.current).trim();
-    onDone({ transcript: text, durationMs: dur });
-  }, [scribe, onDone]);
+    const transcriptPromise = new Promise<string>((resolve) => {
+      rec.onstop = async () => {
+        const blob = new Blob(chunksRef.current, {
+          type: rec.mimeType || "audio/webm",
+        });
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        recorderRef.current = null;
+        if (blob.size === 0) return resolve("");
+        try {
+          const form = new FormData();
+          const ext = (rec.mimeType || "").includes("mp4") ? "mp4" : "webm";
+          form.append("file", blob, `bar.${ext}`);
+          if (language) form.append("language", language);
+          const r = await fetch("/api/transcribe", {
+            method: "POST",
+            body: form,
+          });
+          if (!r.ok) return resolve("");
+          const data = (await r.json()) as { text: string };
+          resolve((data.text ?? "").trim());
+        } catch {
+          resolve("");
+        }
+      };
+      try {
+        rec.stop();
+      } catch {
+        resolve("");
+      }
+    });
+    onDone({ transcriptPromise, durationMs: dur });
+  }, [onDone, language]);
 
   useEffect(() => {
     if (active && !recording) void start();
-    if (!active && recording) void stop();
+    if (!active && recording) stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
@@ -103,13 +125,13 @@ export function MicRecorder({
             {recording ? "Listening…" : "Mic idle"}
           </div>
           <div className="mt-1 min-h-[1.5rem] text-sm">
-            {finalRef.current || scribe.partialTranscript || (
-              <span className="text-muted-foreground">Drop your bar…</span>
-            )}
+            <span className="text-muted-foreground">
+              {recording ? "Recording — we'll transcribe in the background." : "Drop your bar…"}
+            </span>
           </div>
         </div>
         {recording && (
-          <Button variant="secondary" onClick={() => void stop()} size="sm">
+          <Button variant="secondary" onClick={stop} size="sm">
             Done
           </Button>
         )}

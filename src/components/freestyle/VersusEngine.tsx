@@ -32,6 +32,7 @@ interface TurnEntry {
   endWord: string;
   durationMs?: number;
   score?: ScoreData;
+  pending?: boolean;
 }
 
 export function VersusEngine({
@@ -62,6 +63,7 @@ export function VersusEngine({
   const [countdown, setCountdown] = useState(4);
   const [verdict, setVerdict] = useState<{ winner: string; recap: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingRef = useRef<Map<number, Promise<string>>>(new Map());
   const totalSlots = SLOTS.length;
   const currentSlot = SLOTS[slotIndex];
   const isPlayerSlot = currentSlot === "p1" || currentSlot === "p2";
@@ -115,11 +117,13 @@ export function VersusEngine({
         // For ai2, respond to p1's bar
         const prevPlayerEntry =
           slot === "ai2" ? history.find((h) => h.slot === "p1") : undefined;
+        const prevBar = prevPlayerEntry?.pending ? undefined : prevPlayerEntry?.bar;
+        const prevEnd = prevPlayerEntry?.pending ? undefined : prevPlayerEntry?.endWord;
         const bar = await generateBar({
           data: {
             styleId,
-            previousUserBar: prevPlayerEntry?.bar,
-            previousEndWord: prevPlayerEntry?.endWord,
+            previousUserBar: prevBar,
+            previousEndWord: prevEnd,
             roundIndex: slot === "ai1" ? 0 : 1,
             language,
             level,
@@ -154,19 +158,31 @@ export function VersusEngine({
 
   const handleMicDone = useCallback(
     async (result: MicResult) => {
-      if (!result.transcript) {
-        toast.error("Didn't catch that. Try again.");
-        setPhase("userTurn");
-        return;
-      }
       const slot: Slot = currentSlot;
       const entry: TurnEntry = {
         slot,
-        bar: result.transcript,
-        endWord: result.transcript.trim().split(/\s+/).pop() ?? "",
+        bar: "",
+        endWord: "",
         durationMs: result.durationMs,
+        pending: true,
       };
       const newHistory = [...history, entry];
+      const idx = newHistory.length - 1;
+      pendingRef.current.set(idx, result.transcriptPromise);
+      void result.transcriptPromise.then((text) => {
+        setHistory((h) =>
+          h.map((t, i) =>
+            i === idx
+              ? {
+                  ...t,
+                  bar: text,
+                  endWord: text.trim().split(/\s+/).pop() ?? "",
+                  pending: false,
+                }
+              : t,
+          ),
+        );
+      });
       setHistory(newHistory);
 
       // Advance
@@ -176,10 +192,26 @@ export function VersusEngine({
         setPhase("scoringAll");
         clock.stop();
         try {
-          const ai1 = newHistory.find((h) => h.slot === "ai1");
-          const ai2 = newHistory.find((h) => h.slot === "ai2");
-          const p1 = newHistory.find((h) => h.slot === "p1");
-          const p2 = newHistory.find((h) => h.slot === "p2");
+          // Wait for any still-transcribing player bars.
+          const transcripts = await Promise.all(
+            newHistory.map((_, i) =>
+              pendingRef.current.get(i) ?? Promise.resolve(""),
+            ),
+          );
+          const resolved = newHistory.map((t, i) => {
+            if (!pendingRef.current.has(i)) return t;
+            const text = transcripts[i] || "";
+            return {
+              ...t,
+              bar: text,
+              endWord: text.trim().split(/\s+/).pop() ?? "",
+              pending: false,
+            };
+          });
+          const ai1 = resolved.find((h) => h.slot === "ai1");
+          const ai2 = resolved.find((h) => h.slot === "ai2");
+          const p1 = resolved.find((h) => h.slot === "p1");
+          const p2 = resolved.find((h) => h.slot === "p2");
           const [p1Score, p2Score] = await Promise.all([
             p1 && ai1
               ? scoreBar({
@@ -208,7 +240,7 @@ export function VersusEngine({
                 })
               : Promise.resolve(null),
           ]);
-          const scoredHistory = newHistory.map((h) => {
+          const scoredHistory = resolved.map((h) => {
             if (h.slot === "p1" && p1Score) return { ...h, score: p1Score };
             if (h.slot === "p2" && p2Score) return { ...h, score: p2Score };
             return h;

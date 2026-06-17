@@ -14,6 +14,7 @@ import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as BattleRouteImport } from './routes/battle'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
+import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as ApiScribeTokenRouteImport } from './routes/api/scribe-token'
 
 const VersusRoute = VersusRouteImport.update({
@@ -41,6 +42,11 @@ const ApiTtsRoute = ApiTtsRouteImport.update({
   path: '/api/tts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
+  id: '/api/transcribe',
+  path: '/api/transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiScribeTokenRoute = ApiScribeTokenRouteImport.update({
   id: '/api/scribe-token',
   path: '/api/scribe-token',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/practice': typeof PracticeRoute
   '/versus': typeof VersusRoute
   '/api/scribe-token': typeof ApiScribeTokenRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/practice': typeof PracticeRoute
   '/versus': typeof VersusRoute
   '/api/scribe-token': typeof ApiScribeTokenRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/practice': typeof PracticeRoute
   '/versus': typeof VersusRoute
   '/api/scribe-token': typeof ApiScribeTokenRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/versus'
     | '/api/scribe-token'
+    | '/api/transcribe'
     | '/api/tts'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/versus'
     | '/api/scribe-token'
+    | '/api/transcribe'
     | '/api/tts'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/versus'
     | '/api/scribe-token'
+    | '/api/transcribe'
     | '/api/tts'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +117,7 @@ export interface RootRouteChildren {
   PracticeRoute: typeof PracticeRoute
   VersusRoute: typeof VersusRoute
   ApiScribeTokenRoute: typeof ApiScribeTokenRoute
+  ApiTranscribeRoute: typeof ApiTranscribeRoute
   ApiTtsRoute: typeof ApiTtsRoute
 }
 
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTtsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/transcribe': {
+      id: '/api/transcribe'
+      path: '/api/transcribe'
+      fullPath: '/api/transcribe'
+      preLoaderRoute: typeof ApiTranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/scribe-token': {
       id: '/api/scribe-token'
       path: '/api/scribe-token'
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   PracticeRoute: PracticeRoute,
   VersusRoute: VersusRoute,
   ApiScribeTokenRoute: ApiScribeTokenRoute,
+  ApiTranscribeRoute: ApiTranscribeRoute,
   ApiTtsRoute: ApiTtsRoute,
 }
 export const routeTree = rootRouteImport
