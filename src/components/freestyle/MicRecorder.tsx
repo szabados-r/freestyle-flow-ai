@@ -15,11 +15,13 @@ export function MicRecorder({
   onDone,
   accent,
   language,
+  prompt,
 }: {
   active: boolean;
   onDone: (r: MicResult) => void;
   accent: string;
   language?: string;
+  prompt?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
@@ -46,8 +48,8 @@ export function MicRecorder({
           ? "audio/mp4"
           : "";
       const rec = mime
-        ? new MediaRecorder(stream, { mimeType: mime })
-        : new MediaRecorder(stream);
+        ? new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 128000 })
+        : new MediaRecorder(stream, { audioBitsPerSecond: 128000 });
       rec.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
@@ -79,6 +81,7 @@ export function MicRecorder({
           const ext = (rec.mimeType || "").includes("mp4") ? "mp4" : "webm";
           form.append("file", blob, `bar.${ext}`);
           if (language) form.append("language", language);
+          if (prompt) form.append("prompt", prompt);
           const r = await fetch("/api/transcribe", {
             method: "POST",
             body: form,
@@ -97,7 +100,7 @@ export function MicRecorder({
       }
     });
     onDone({ transcriptPromise, durationMs: dur });
-  }, [onDone, language]);
+  }, [onDone, language, prompt]);
 
   useEffect(() => {
     if (active && !recording) void start();
