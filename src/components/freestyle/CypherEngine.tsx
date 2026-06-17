@@ -293,6 +293,8 @@ export function CypherEngine({
           active={phase === "userTurn"}
           onDone={handleMicDone}
           accent={style.accent}
+          language={language}
+          prompt={round?.aiBar}
         />
       )}
 
