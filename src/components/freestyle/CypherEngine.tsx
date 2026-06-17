@@ -34,7 +34,7 @@ interface RoundData {
 export function CypherEngine({
   styleId,
   bpm,
-  mode,
+  mode: _mode,
   maxRounds,
   language,
   level,
