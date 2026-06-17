@@ -273,8 +273,3 @@ function StepRapper({
     </div>
   );
 }
-
-    </div>
-  );
-}
-
