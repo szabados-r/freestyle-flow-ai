@@ -166,7 +166,9 @@
   }
 
   .script {
-    font-family: "Allura", "Tangerine", "Pinyon Script", cursive;
+    font-family: "Anton", "Bebas Neue", "Impact", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     font-weight: 400;
   }
 
