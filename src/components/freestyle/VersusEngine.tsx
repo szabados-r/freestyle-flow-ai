@@ -24,6 +24,7 @@ type Phase =
   | "done";
 
 type Slot = "ai1" | "p1" | "ai2" | "p2";
+const SLOTS: Slot[] = ["ai1", "p1", "ai2", "p2"];
 
 interface TurnEntry {
   slot: Slot;
@@ -61,9 +62,8 @@ export function VersusEngine({
   const [countdown, setCountdown] = useState(4);
   const [verdict, setVerdict] = useState<{ winner: string; recap: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const totalSlots = 4;
-  const slots: Slot[] = ["ai1", "p1", "ai2", "p2"];
-  const currentSlot = slots[slotIndex];
+  const totalSlots = SLOTS.length;
+  const currentSlot = SLOTS[slotIndex];
   const isPlayerSlot = currentSlot === "p1" || currentSlot === "p2";
   const currentPlayer: 1 | 2 = currentSlot === "p1" ? 1 : 2;
   const currentName = currentPlayer === 1 ? p1Name : p2Name;
@@ -243,7 +243,7 @@ export function VersusEngine({
       }
       setSlotIndex(nextIndex);
       // If next is an AI slot, run it; otherwise show handoff to next player
-      const nextSlot = slots[nextIndex];
+      const nextSlot = SLOTS[nextIndex];
       if (nextSlot === "ai2") {
         void runAiSlot("ai2");
       } else {
@@ -262,7 +262,6 @@ export function VersusEngine({
       p2Name,
       playTts,
       runAiSlot,
-      slots,
     ],
   );
 
