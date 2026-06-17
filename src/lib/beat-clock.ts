@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 export interface BeatClock {
   start: () => Promise<void>;
   stop: () => void;
+  setVolume: (v: number) => void;
   isPlaying: boolean;
   beat: number; // 0..3 within current bar
   bar: number; // increments every bar
@@ -16,6 +17,7 @@ export function useBeatClock(bpm: number): BeatClock {
   const [beat, setBeat] = useState(0);
   const [bar, setBar] = useState(0);
   const ctxRef = useRef<AudioContext | null>(null);
+  const masterRef = useRef<GainNode | null>(null);
   const stopFlagRef = useRef(false);
   const startedAtRef = useRef(0);
   const beatDur = 60 / bpm;
@@ -27,18 +29,18 @@ export function useBeatClock(bpm: number): BeatClock {
     };
   }, []);
 
-  const playKick = (ctx: AudioContext, t: number) => {
+  const playKick = (ctx: AudioContext, dest: AudioNode, t: number) => {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.frequency.setValueAtTime(140, t);
     o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-    g.gain.setValueAtTime(0.9, t);
+    g.gain.setValueAtTime(0.6, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-    o.connect(g).connect(ctx.destination);
+    o.connect(g).connect(dest);
     o.start(t);
     o.stop(t + 0.22);
   };
-  const playSnare = (ctx: AudioContext, t: number) => {
+  const playSnare = (ctx: AudioContext, dest: AudioNode, t: number) => {
     const buf = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
     const d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
@@ -48,11 +50,11 @@ export function useBeatClock(bpm: number): BeatClock {
     hp.type = "highpass";
     hp.frequency.value = 1500;
     const g = ctx.createGain();
-    g.gain.value = 0.4;
-    src.connect(hp).connect(g).connect(ctx.destination);
+    g.gain.value = 0.25;
+    src.connect(hp).connect(g).connect(dest);
     src.start(t);
   };
-  const playHat = (ctx: AudioContext, t: number) => {
+  const playHat = (ctx: AudioContext, dest: AudioNode, t: number) => {
     const buf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
     const d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
@@ -62,8 +64,8 @@ export function useBeatClock(bpm: number): BeatClock {
     hp.type = "highpass";
     hp.frequency.value = 6000;
     const g = ctx.createGain();
-    g.gain.value = 0.15;
-    src.connect(hp).connect(g).connect(ctx.destination);
+    g.gain.value = 0.08;
+    src.connect(hp).connect(g).connect(dest);
     src.start(t);
   };
 
@@ -73,6 +75,10 @@ export function useBeatClock(bpm: number): BeatClock {
     const ctx = new AudioContext();
     ctxRef.current = ctx;
     await ctx.resume();
+    const master = ctx.createGain();
+    master.gain.value = 0.45;
+    master.connect(ctx.destination);
+    masterRef.current = master;
     setIsPlaying(true);
     const startTime = ctx.currentTime + 0.1;
     startedAtRef.current = startTime;
@@ -85,10 +91,10 @@ export function useBeatClock(bpm: number): BeatClock {
         while (scheduledUntil < ctx.currentTime + 0.3) {
           const t = scheduledUntil;
           const bi = beatIndex % 4;
-          if (bi === 0 || bi === 2) playKick(ctx, t);
-          if (bi === 1 || bi === 3) playSnare(ctx, t);
-          playHat(ctx, t);
-          playHat(ctx, t + beatDur / 2);
+          if (bi === 0 || bi === 2) playKick(ctx, master, t);
+          if (bi === 1 || bi === 3) playSnare(ctx, master, t);
+          playHat(ctx, master, t);
+          playHat(ctx, master, t + beatDur / 2);
           scheduledUntil += beatDur;
           beatIndex++;
         }
@@ -113,10 +119,19 @@ export function useBeatClock(bpm: number): BeatClock {
     stopFlagRef.current = true;
     ctxRef.current?.close().catch(() => {});
     ctxRef.current = null;
+    masterRef.current = null;
     setIsPlaying(false);
     setBeat(0);
     setBar(0);
   };
 
-  return { start, stop, isPlaying, beat, bar };
+  const setVolume = (v: number) => {
+    const m = masterRef.current;
+    const ctx = ctxRef.current;
+    if (!m || !ctx) return;
+    m.gain.cancelScheduledValues(ctx.currentTime);
+    m.gain.linearRampToValueAtTime(Math.max(0, v), ctx.currentTime + 0.15);
+  };
+
+  return { start, stop, setVolume, isPlaying, beat, bar };
 }
