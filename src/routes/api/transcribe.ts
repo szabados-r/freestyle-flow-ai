@@ -13,6 +13,7 @@ export const Route = createFileRoute("/api/transcribe")({
           return new Response("missing file", { status: 400 });
         }
         const language = (incoming.get("language") as string) || "";
+        const prompt = (incoming.get("prompt") as string) || "";
 
         const form = new FormData();
         form.append("file", file, "bar.webm");
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/api/transcribe")({
         form.append("tag_audio_events", "false");
         form.append("diarize", "false");
         if (language) form.append("language_code", language);
+        if (prompt) form.append("prompt", prompt);
 
         const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
           method: "POST",
