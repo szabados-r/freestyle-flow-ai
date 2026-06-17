@@ -3,7 +3,7 @@ import { generateText, Output } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
-import { STYLES, type StyleId } from "./styles";
+import { LEVELS, STYLES, TOPICS, type StyleId } from "./styles";
 
 const BarSchema = z.object({
   bar: z.string().describe("A single 4-beat rap bar, 8-14 syllables, ending on a clear rhyme word."),
@@ -34,6 +34,9 @@ function getGateway() {
 }
 
 const styleIdSchema = z.enum(["drake", "future", "nicki", "thug", "magyar", "hofi", "azahriah"]);
+const languageSchema = z.enum(["en", "hu"]).optional();
+const levelSchema = z.enum(["easy", "medium", "hard"]).optional();
+const topicSchema = z.enum(["freestyle", "pop", "sports", "music"]).optional();
 
 export const generateBar = createServerFn({ method: "POST" })
   .inputValidator(
@@ -42,14 +45,20 @@ export const generateBar = createServerFn({ method: "POST" })
       previousUserBar: z.string().optional(),
       previousEndWord: z.string().optional(),
       roundIndex: z.number().int().min(0).default(0),
+      language: languageSchema,
+      level: levelSchema,
+      topic: topicSchema,
     }),
   )
   .handler(async ({ data }) => {
     const style = STYLES[data.styleId as StyleId];
     const gateway = getGateway();
+    const lang = data.language ?? style.language;
+    const level = data.level ? LEVELS[data.level] : LEVELS.medium;
+    const topic = data.topic ? TOPICS[data.topic] : TOPICS.freestyle;
 
     const langRule =
-      style.language === "hu"
+      lang === "hu"
         ? `LANGUAGE: Write the bar in HUNGARIAN (magyar nyelven). Use natural Hungarian slang, no English words except common loanwords. Rhyme using Hungarian word endings.`
         : `LANGUAGE: Write the bar in English.`;
 
@@ -57,8 +66,11 @@ export const generateBar = createServerFn({ method: "POST" })
 
 ${langRule}
 
+DIFFICULTY (${level.label}): Aim for ${level.syllables}. ${level.complexity}
+TOPIC: Focus the bar on ${topic.prompt}
+
 RULES:
-- Output ONE bar only (4 beats, 8-14 syllables).
+- Output ONE bar only (4 beats, ${level.syllables}).
 - End on a strong, clearly-rhymable word (the "endWord").
 - Stay clean of slurs and real-person disses. Brag, flex, wordplay, punchlines.
 - Do NOT quote copyrighted lyrics. Original lines only.
@@ -87,6 +99,7 @@ export const scoreBar = createServerFn({ method: "POST" })
       userBar: z.string(),
       bpm: z.number(),
       durationMs: z.number().optional(),
+      language: languageSchema,
     }),
   )
   .handler(async ({ data }) => {
@@ -98,8 +111,9 @@ export const scoreBar = createServerFn({ method: "POST" })
       ? `User took ${Math.round(data.durationMs)}ms; a clean 4-beat bar at ${data.bpm} BPM is ~${Math.round(expectedBarMs)}ms.`
       : "No precise timing available; judge from text rhythm.";
 
+    const lang = data.language ?? style.language;
     const langNote =
-      style.language === "hu"
+      lang === "hu"
         ? `Both bars should be in Hungarian. Judge Hungarian rhyme and flow naturally.`
         : `Both bars should be in English.`;
 

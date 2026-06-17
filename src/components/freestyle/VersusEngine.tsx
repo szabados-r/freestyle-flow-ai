@@ -37,12 +37,18 @@ export function VersusEngine({
   p1Name,
   p2Name,
   rounds,
+  language,
+  level,
+  topic,
 }: {
   styleId: StyleId;
   bpm: number;
   p1Name: string;
   p2Name: string;
   rounds: number; // total bars (split between players)
+  language?: "en" | "hu";
+  level?: "easy" | "medium" | "hard";
+  topic?: "freestyle" | "pop" | "sports" | "music";
 }) {
   const navigate = useNavigate();
   const style = STYLES[styleId];
@@ -100,7 +106,7 @@ export function VersusEngine({
       setPhase("intro");
       // Generate an opening "topic" bar from the host artist
       const opener = await generateBar({
-        data: { styleId, roundIndex: 0 },
+        data: { styleId, roundIndex: 0, language, level, topic },
       });
       setIntro({ bar: opener.bar, endWord: opener.endWord });
       setPhase("introSpeaking");
@@ -110,7 +116,7 @@ export function VersusEngine({
       toast.error(e instanceof Error ? e.message : "Failed to start");
       setPhase("idle");
     }
-  }, [clock, styleId, p1Name, p2Name, playTts, runCountdown]);
+  }, [clock, styleId, p1Name, p2Name, playTts, runCountdown, language, level, topic]);
 
   const handleMicDone = useCallback(
     async (result: MicResult) => {
@@ -132,6 +138,7 @@ export function VersusEngine({
             userBar: result.transcript,
             bpm,
             durationMs: result.durationMs,
+            language,
           },
         });
         const entry: TurnEntry = {
@@ -148,7 +155,7 @@ export function VersusEngine({
         setPhase("result");
       }
     },
-    [styleId, bpm, currentPlayer, lastEntry, intro],
+    [styleId, bpm, currentPlayer, lastEntry, intro, language],
   );
 
   const handleNext = useCallback(async () => {
