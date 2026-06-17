@@ -8,10 +8,7 @@ import {
   LEVELS,
   STYLE_LIST,
   STYLES,
-  TOPICS,
-  type LevelId,
   type StyleId,
-  type TopicId,
 } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
@@ -36,24 +33,26 @@ export const Route = createFileRoute("/")({
 type ModeType = "solo" | "battle";
 type Lang = "en" | "hu";
 
+// System-level defaults (previously user-selectable steps).
+const DEFAULT_LEVEL: "easy" | "medium" | "hard" = "medium";
+const DEFAULT_TOPIC = "freestyle" as const;
+
 function Index() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<ModeType | null>(null);
   const [styleId, setStyleId] = useState<StyleId | null>(null);
   const [language, setLanguage] = useState<Lang | null>(null);
-  const [level, setLevel] = useState<LevelId | null>(null);
-  const [topic, setTopic] = useState<TopicId | null>(null);
 
   const accent = styleId ? STYLES[styleId].accent : "#facc15";
-  const totalSteps = 5;
+  const totalSteps = 3;
 
   const goNext = (s: number) => setStep(s);
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   const launch = () => {
-    if (!mode || !styleId || !language || !level || !topic) return;
-    const lvl = LEVELS[level];
+    if (!mode || !styleId || !language) return;
+    const lvl = LEVELS[DEFAULT_LEVEL];
     if (mode === "battle") {
       navigate({
         to: "/versus",
@@ -61,15 +60,21 @@ function Index() {
           style: styleId,
           bpm: lvl.bpm,
           language,
-          level,
-          topic,
+          level: DEFAULT_LEVEL,
+          topic: DEFAULT_TOPIC,
         },
       });
       return;
     }
     navigate({
       to: "/battle",
-      search: { style: styleId, bpm: lvl.bpm, language, level, topic },
+      search: {
+        style: styleId,
+        bpm: lvl.bpm,
+        language,
+        level: DEFAULT_LEVEL,
+        topic: DEFAULT_TOPIC,
+      },
     });
   };
 
@@ -137,33 +142,13 @@ function Index() {
               value={language}
               onPick={(l) => {
                 setLanguage(l);
-                goNext(4);
-              }}
-            />
-          )}
-          {step === 4 && (
-            <StepLevel
-              accent={accent}
-              value={level}
-              onPick={(l) => {
-                setLevel(l);
-                goNext(5);
-              }}
-            />
-          )}
-          {step === 5 && (
-            <StepTopic
-              accent={accent}
-              value={topic}
-              onPick={(t) => {
-                setTopic(t);
               }}
             />
           )}
         </motion.section>
       </AnimatePresence>
 
-      {step === 5 && topic && (
+      {step === 3 && language && (
         <Button
           className="display mt-10 h-auto w-full rounded-none border-2 border-[color:var(--neon-pink)] bg-transparent py-6 text-3xl uppercase tracking-[0.4em] hover:bg-[color:var(--neon-pink)]/15"
           style={{ boxShadow: "0 0 24px var(--neon-pink), inset 0 0 18px rgba(255,45,156,0.25)" }}
