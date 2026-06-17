@@ -37,6 +37,7 @@ magyar rím- és prozódia-szabályok.
 
 ```bash
 bun install
+cp .env.example .env.local   # then fill in your own keys
 bun run dev
 ```
 
@@ -44,8 +45,15 @@ Open http://localhost:8080.
 
 ### Required env vars (server-only)
 
-- `LOVABLE_API_KEY` — Lovable AI Gateway key
-- `ELEVENLABS_API_KEY` — ElevenLabs account key
+These are read from the server runtime (`process.env`) and are **never
+committed** to git. If you cloned this repo from GitHub, you'll need to add
+your own:
+
+- `LOVABLE_API_KEY` — Lovable AI Gateway key (https://lovable.dev)
+- `ELEVENLABS_API_KEY` — ElevenLabs account key (https://elevenlabs.io/app/settings/api-keys)
+
+Put them in `.env.local` (gitignored via `*.local`) for local dev, or set
+them as runtime secrets in your hosting environment.
 
 If ElevenLabs returns `{"detail":{"status":"detected_unusual_activity",...}}`,
 the free tier was blocked — upgrade to Creator at
