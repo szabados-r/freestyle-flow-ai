@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/transcribe")({
         const apiKey = requireElevenLabsKey();
         const incoming = await request.formData();
         const file = incoming.get("file");
-        if (!(file instanceof File) && !(file instanceof Blob)) {
+        if (!file || typeof file === "string") {
           return new Response("missing file", { status: 400 });
         }
         const language = (incoming.get("language") as string) || "";
