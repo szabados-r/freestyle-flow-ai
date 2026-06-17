@@ -16,6 +16,9 @@ const search = z.object({
   p2: z.string().optional(),
   bars: z.coerce.number().optional(),
   go: z.coerce.boolean().optional(),
+  language: z.enum(["en", "hu"]).optional(),
+  level: z.enum(["easy", "medium", "hard"]).optional(),
+  topic: z.enum(["freestyle", "pop", "sports", "music"]).optional(),
 });
 
 export const Route = createFileRoute("/versus")({
@@ -47,6 +50,9 @@ function Versus() {
           p1Name={sp.p1}
           p2Name={sp.p2}
           rounds={sp.bars ?? 8}
+          language={sp.language}
+          level={sp.level}
+          topic={sp.topic}
         />
       </main>
     );
@@ -166,7 +172,17 @@ function Versus() {
         onClick={() =>
           navigate({
             to: "/versus",
-            search: { style: styleId, bpm, p1: p1.trim(), p2: p2.trim(), bars, go: true },
+            search: {
+              style: styleId,
+              bpm,
+              p1: p1.trim(),
+              p2: p2.trim(),
+              bars,
+              go: true,
+              language: sp.language,
+              level: sp.level,
+              topic: sp.topic,
+            },
           })
         }
       >
