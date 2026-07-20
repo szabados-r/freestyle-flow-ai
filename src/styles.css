@@ -90,6 +90,10 @@
   --brick: #a44a2c;
   --olive: #8a8060;
   --paper: #d9d2c4;
+  --mustard: #d9a441;
+  --teal: #3f8a8a;
+  --plum: #7a3b5c;
+  --electric: #4a6cf7;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -152,7 +156,9 @@
     font-feature-settings: "ss01", "cv11";
     background-color: #17150f;
     background-image:
-      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(201, 111, 74, 0.08), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 15% -10%, rgba(201, 111, 74, 0.18), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(63, 138, 138, 0.14), transparent 60%),
+      radial-gradient(ellipse 60% 45% at 50% 110%, rgba(217, 164, 65, 0.10), transparent 60%),
       url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.8  0 0 0 0 0.7  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     background-attachment: fixed;
   }

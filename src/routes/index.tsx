@@ -122,14 +122,14 @@ function Index() {
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
-          NY · Freestyle Trainer · Est. 2026
+          <span className="text-[color:var(--ember)]">NY</span> · Freestyle Trainer · Est. 2026
         </div>
         <h1 className="mt-2 flex flex-col">
           <span className="script text-7xl italic leading-[0.9] text-foreground md:text-8xl">
-            Cypher
+            Cy<span className="text-[color:var(--ember)]">p</span>her
           </span>
         </h1>
-        <div className="mt-4 h-px w-full bg-border" />
+        <div className="mt-4 h-px w-full bg-gradient-to-r from-[color:var(--ember)] via-[color:var(--mustard)] to-transparent" />
       </motion.div>
 
       <div className="mt-8 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
@@ -144,8 +144,11 @@ function Index() {
       </div>
       <div className="mt-3 h-px w-full bg-border">
         <div
-          className="h-px bg-foreground/70 transition-all"
-          style={{ width: `${(step / totalSteps) * 100}%` }}
+          className="h-px transition-all"
+          style={{
+            width: `${(step / totalSteps) * 100}%`,
+            background: "linear-gradient(90deg, var(--ember), var(--mustard))",
+          }}
         />
       </div>
 
@@ -261,7 +264,7 @@ function StepMode({
       id: "battle",
       label: "2-Player Battle",
       blurb: "Pass the phone. AI rapper opens, you and a friend trade back. Judged at the end.",
-      accent: "#c9a37a",
+      accent: "#3f8a8a",
     },
   ];
   return (

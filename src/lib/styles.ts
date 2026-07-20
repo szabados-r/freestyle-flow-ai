@@ -22,7 +22,7 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     cadence: "smooth triplets, occasional sing-rap, end words held and stretched, conversational pocket delivery",
     adlibs: ["yeah", "you know", "girl"],
     voiceId: "P3TGjm2n0VMOjnMS0QR5", // custom Drake clone
-    accent: "#c9a37a",
+    accent: "#d9a441",
     language: "en",
     languageLabel: "English",
   },
@@ -34,7 +34,7 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     cadence: "fast double-time, character voices, hard punchlines",
     adlibs: ["okurr", "yass", "uh"],
     voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice
-    accent: "#c96f4a",
+    accent: "#c94a6a",
     language: "en",
     languageLabel: "English",
   },
@@ -46,7 +46,7 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     cadence: "lassú drill kadencia, súlyos végrímek, szaggatott flow",
     adlibs: ["yo", "beton", "ah"],
     voiceId: "r2ej5ZQWgnB9OsNnW1ey", // custom Beton Hofi clone
-    accent: "#8a8060",
+    accent: "#3f8a8a",
     language: "hu",
     languageLabel: "Magyar",
   },
