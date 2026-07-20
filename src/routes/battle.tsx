@@ -4,8 +4,8 @@ import { z } from "zod";
 import { CypherEngine } from "@/components/freestyle/CypherEngine";
 
 const search = z.object({
-  style: z.enum(["drake", "future", "nicki", "thug", "magyar", "hofi", "azahriah"]).default("drake"),
-  bpm: z.coerce.number().default(85),
+  style: z.enum(["drake", "nicki", "hofi"]).default("drake"),
+  bpm: z.coerce.number().default(95),
   language: z.enum(["en", "hu"]).optional(),
   level: z.enum(["easy", "medium", "hard"]).optional(),
   topic: z.enum(["freestyle", "pop", "sports", "music", "whatever"]).optional(),

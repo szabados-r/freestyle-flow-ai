@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Settings2 } from "lucide-react";
 
 import {
-  LEVELS,
+  DEFAULT_BPM,
   STYLE_LIST,
   STYLES,
   TOPICS,
@@ -13,6 +13,8 @@ import {
   type StyleId,
 } from "@/lib/styles";
 import { cn } from "@/lib/utils";
+
+const DEFAULT_LEVEL: LevelId = "easy";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,25 +36,23 @@ export const Route = createFileRoute("/")({
 
 type ModeType = "solo" | "battle";
 
-// System-level defaults — user-tunable via the config panel.
-const DEFAULT_LEVEL: LevelId = "medium";
+// Difficulty is fixed app-wide (see src/lib/styles.ts LEVELS/DEFAULT_BPM) — only topic is user-tunable.
 const DEFAULT_TOPIC: TopicId = "freestyle";
 const CONFIG_KEY = "cypher.systemConfig.v1";
 
-type SystemConfig = { level: LevelId; topic: TopicId };
+type SystemConfig = { topic: TopicId };
 
 function loadConfig(): SystemConfig {
-  if (typeof window === "undefined") return { level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC };
+  if (typeof window === "undefined") return { topic: DEFAULT_TOPIC };
   try {
     const raw = window.localStorage.getItem(CONFIG_KEY);
-    if (!raw) return { level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC };
+    if (!raw) return { topic: DEFAULT_TOPIC };
     const parsed = JSON.parse(raw) as Partial<SystemConfig>;
     return {
-      level: (parsed.level && LEVELS[parsed.level as LevelId] ? parsed.level : DEFAULT_LEVEL) as LevelId,
       topic: (parsed.topic && TOPICS[parsed.topic as TopicId] ? parsed.topic : DEFAULT_TOPIC) as TopicId,
     };
   } catch {
-    return { level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC };
+    return { topic: DEFAULT_TOPIC };
   }
 }
 
@@ -61,7 +61,7 @@ function Index() {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<ModeType | null>(null);
   const [styleId, setStyleId] = useState<StyleId | null>(null);
-  const [config, setConfig] = useState<SystemConfig>({ level: DEFAULT_LEVEL, topic: DEFAULT_TOPIC });
+  const [config, setConfig] = useState<SystemConfig>({ topic: DEFAULT_TOPIC });
   const [configOpen, setConfigOpen] = useState(false);
 
   useEffect(() => {
@@ -86,15 +86,14 @@ function Index() {
   const launch = () => {
     if (!mode || !styleId) return;
     const language = STYLES[styleId].language;
-    const lvl = LEVELS[config.level];
     if (mode === "battle") {
       navigate({
         to: "/versus",
         search: {
           style: styleId,
-          bpm: lvl.bpm,
+          bpm: DEFAULT_BPM,
           language,
-          level: config.level,
+          level: DEFAULT_LEVEL,
           topic: config.topic,
         },
       });
@@ -104,9 +103,9 @@ function Index() {
       to: "/battle",
       search: {
         style: styleId,
-        bpm: lvl.bpm,
+        bpm: DEFAULT_BPM,
         language,
-        level: config.level,
+        level: DEFAULT_LEVEL,
         topic: config.topic,
       },
     });
@@ -290,9 +289,7 @@ function SystemConfigPanel({
   config: SystemConfig;
   onChange: (patch: Partial<SystemConfig>) => void;
 }) {
-  const levelOrder: LevelId[] = ["easy", "medium", "hard"];
   const topicOrder: TopicId[] = ["freestyle", "pop", "sports", "music", "whatever"];
-  const currentLevel = LEVELS[config.level];
   const currentTopic = TOPICS[config.topic];
 
   return (
@@ -307,7 +304,7 @@ function SystemConfigPanel({
           System Config
         </span>
         <span className="opacity-70">
-          {currentLevel.label} · {currentLevel.bpm} BPM · {currentTopic.label}
+          {currentTopic.label}
           <span className="ml-3">{open ? "—" : "+"}</span>
         </span>
       </button>
@@ -322,44 +319,6 @@ function SystemConfigPanel({
             className="overflow-hidden"
           >
             <div className="mt-6 space-y-6">
-              <div>
-                <div className="mono mb-2 text-[10px] uppercase tracking-[0.3em] text-[color:var(--neon-pink)]">
-                  Level &amp; tempo
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {levelOrder.map((id) => {
-                    const l = LEVELS[id];
-                    const active = config.level === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => onChange({ level: id })}
-                        className={cn(
-                          "velvet rounded-[3px] p-3 text-left transition-all",
-                          active ? "scale-[1.02]" : "opacity-70 hover:opacity-100",
-                        )}
-                        style={
-                          active
-                            ? {
-                                borderColor: "var(--neon-pink)",
-                                boxShadow:
-                                  "0 0 0 1px var(--neon-pink) inset, 0 0 18px rgba(255,45,156,0.45)",
-                              }
-                            : undefined
-                        }
-                      >
-                        <div className="script text-xl leading-none">{l.label}</div>
-                        <div className="mono mt-1 text-[10px] uppercase tracking-[0.2em] opacity-70">
-                          {l.bpm} BPM
-                        </div>
-                        <div className="mt-1 text-[11px] italic opacity-75">{l.blurb}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               <div>
                 <div className="mono mb-2 text-[10px] uppercase tracking-[0.3em] text-[color:var(--neon-pink)]">
                   Topic

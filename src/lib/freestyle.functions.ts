@@ -33,7 +33,7 @@ function getGateway() {
   });
 }
 
-const styleIdSchema = z.enum(["drake", "future", "nicki", "thug", "magyar", "hofi", "azahriah"]);
+const styleIdSchema = z.enum(["drake", "nicki", "hofi"]);
 const languageSchema = z.enum(["en", "hu"]).optional();
 const levelSchema = z.enum(["easy", "medium", "hard"]).optional();
 const topicSchema = z
@@ -56,7 +56,7 @@ export const generateBar = createServerFn({ method: "POST" })
     const style = STYLES[data.styleId as StyleId];
     const gateway = getGateway();
     const lang = data.language ?? style.language;
-    const level = data.level ? LEVELS[data.level] : LEVELS.medium;
+    const level = data.level ? LEVELS[data.level] : LEVELS.easy;
     const topic = data.topic ? TOPICS[data.topic] : TOPICS.freestyle;
 
     const langRule =

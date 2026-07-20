@@ -1,11 +1,4 @@
-export type StyleId =
-  | "drake"
-  | "future"
-  | "nicki"
-  | "thug"
-  | "magyar"
-  | "hofi"
-  | "azahriah";
+export type StyleId = "drake" | "nicki" | "hofi";
 
 export interface ArtistStyle {
   id: StyleId;
@@ -25,23 +18,11 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     id: "drake",
     name: "The 6 God",
     blurb: "Moody Toronto melodic flows, introspective brags.",
-    vibe: "melodic, half-sung, reflective, late-night",
-    cadence: "smooth triplets, occasional sing-rap, end words held",
+    vibe: "melodic, half-sung, reflective, late-night; themes of loyalty vs. betrayal, come-up nostalgia, love-life regret, and quiet-flex wealth talk",
+    cadence: "smooth triplets, occasional sing-rap, end words held and stretched, conversational pocket delivery",
     adlibs: ["yeah", "you know", "girl"],
     voiceId: "P3TGjm2n0VMOjnMS0QR5", // custom Drake clone
     accent: "#f0abfc",
-    language: "en",
-    languageLabel: "English",
-  },
-  future: {
-    id: "future",
-    name: "Pluto",
-    blurb: "Atlanta auto-tune trap, codeine cadence.",
-    vibe: "auto-tune trap, slurred melodies, hard flexes",
-    cadence: "syrupy triplets, mumble-rap, hard trap punches",
-    adlibs: ["ay", "hold up", "pluto"],
-    voiceId: "cjVigY5qzO86Huf0OWal", // Eric
-    accent: "#a3e635",
     language: "en",
     languageLabel: "English",
   },
@@ -57,33 +38,9 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     language: "en",
     languageLabel: "English",
   },
-  thug: {
-    id: "thug",
-    name: "Slime",
-    blurb: "ATL melodic experimentalist, weird flexes.",
-    vibe: "yelpy, weird melodic flows, slime adlibs",
-    cadence: "unpredictable, falsetto runs, choppy delivery",
-    adlibs: ["slime", "skrt", "yuh"],
-    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie
-    accent: "#22d3ee",
-    language: "en",
-    languageLabel: "English",
-  },
-  magyar: {
-    id: "magyar",
-    name: "Magyar MC",
-    blurb: "Budapesti freestyle — magyar nyelven, kemény rímek.",
-    vibe: "magyar hip-hop, utcai energia, okos szójátékok",
-    cadence: "magyar prozódia, hangsúlyos első szótag, tiszta végrímek",
-    adlibs: ["yo", "ja", "hallod"],
-    voiceId: "JBFqnCBsd6RMkjVDRZzb", // George (multilingual)
-    accent: "#facc15",
-    language: "hu",
-    languageLabel: "Magyar",
-  },
   hofi: {
     id: "hofi",
-    name: "Beton",
+    name: "Beton Hofi",
     blurb: "Nyers magyar drill — sötét, kemény, utcai.",
     vibe: "magyar drill, sötét hangulat, nyers utcai energia, hideg flex",
     cadence: "lassú drill kadencia, súlyos végrímek, szaggatott flow",
@@ -93,63 +50,45 @@ export const STYLES: Record<StyleId, ArtistStyle> = {
     language: "hu",
     languageLabel: "Magyar",
   },
-  azahriah: {
-    id: "azahriah",
-    name: "Azarja",
-    blurb: "Melodikus magyar pop-rap — dallamos, érzelmes flow.",
-    vibe: "dallamos magyar pop-rap, érzelmes énekrap, könnyed nyári vibe",
-    cadence: "dallamos félig énekelt sorok, lágy triplák, elnyújtott végszavak",
-    adlibs: ["yeah", "uhh", "na"],
-    voiceId: "JBFqnCBsd6RMkjVDRZzb",
-    accent: "#f97316",
-    language: "hu",
-    languageLabel: "Magyar",
-  },
 };
 
 export const STYLE_LIST = Object.values(STYLES);
 
-export const BPM_OPTIONS = [
-  { label: "Slow", bpm: 75 },
-  { label: "Mid", bpm: 85 },
-  { label: "Fast", bpm: 95 },
-];
+// Tempo is fixed app-wide, independent of difficulty level.
+export const DEFAULT_BPM = 95;
 
 export type LevelId = "easy" | "medium" | "hard";
 
 export interface Level {
   id: LevelId;
   label: string;
-  bpm: number;
   syllables: string;
   complexity: string;
   blurb: string;
 }
 
+// Difficulty controls word/rhyme complexity only — tempo is fixed (see DEFAULT_BPM).
 export const LEVELS: Record<LevelId, Level> = {
   easy: {
     id: "easy",
     label: "Easy",
-    bpm: 75,
     syllables: "6-8 syllables",
     complexity: "simple, common words. single-syllable end rhymes.",
-    blurb: "Slow tempo, short bars, easy rhymes.",
+    blurb: "Short bars, easy rhymes.",
   },
   medium: {
     id: "medium",
     label: "Medium",
-    bpm: 85,
     syllables: "8-12 syllables",
     complexity: "everyday vocabulary, occasional internal rhyme.",
-    blurb: "Standard tempo, mid-length bars.",
+    blurb: "Mid-length bars.",
   },
   hard: {
     id: "hard",
     label: "Hard",
-    bpm: 95,
     syllables: "12-16 syllables",
     complexity: "advanced vocabulary, multisyllabic rhymes, dense wordplay.",
-    blurb: "Fast tempo, long dense bars, complex rhymes.",
+    blurb: "Long dense bars, complex rhymes.",
   },
 };
 

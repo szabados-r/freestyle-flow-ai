@@ -6,11 +6,11 @@ import { VersusEngine } from "@/components/freestyle/VersusEngine";
 import { StylePicker } from "@/components/freestyle/StylePicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BPM_OPTIONS, STYLES, type StyleId } from "@/lib/styles";
+import { DEFAULT_BPM, STYLES, type StyleId } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 const search = z.object({
-  style: z.enum(["drake", "future", "nicki", "thug", "magyar", "hofi", "azahriah"]).optional(),
+  style: z.enum(["drake", "nicki", "hofi"]).optional(),
   bpm: z.coerce.number().optional(),
   p1: z.string().optional(),
   p2: z.string().optional(),
@@ -36,7 +36,7 @@ function Versus() {
   const sp = Route.useSearch();
   const navigate = useNavigate();
   const [styleId, setStyleId] = useState<StyleId>(sp.style ?? "drake");
-  const [bpm, setBpm] = useState(sp.bpm ?? 85);
+  const bpm = DEFAULT_BPM;
   const [p1, setP1] = useState(sp.p1 ?? "");
   const [p2, setP2] = useState(sp.p2 ?? "");
   const [bars, setBars] = useState<number>(sp.bars ?? 8);
@@ -46,7 +46,7 @@ function Versus() {
       <main className="mx-auto min-h-screen max-w-3xl px-6 py-8">
         <VersusEngine
           styleId={(sp.style ?? "drake") as StyleId}
-          bpm={sp.bpm ?? 85}
+          bpm={DEFAULT_BPM}
           p1Name={sp.p1}
           p2Name={sp.p2}
           rounds={sp.bars ?? 8}
@@ -111,32 +111,6 @@ function Versus() {
           Battle style
         </h2>
         <StylePicker value={styleId} onChange={setStyleId} />
-      </section>
-
-      <section className="mt-8">
-        <h2 className="display mb-3 text-sm uppercase tracking-widest text-muted-foreground">
-          Tempo
-        </h2>
-        <div className="flex gap-2">
-          {BPM_OPTIONS.map((o) => (
-            <button
-              key={o.bpm}
-              type="button"
-              onClick={() => setBpm(o.bpm)}
-              className={cn(
-                "rounded-md border-2 px-5 py-3 transition-all",
-                bpm === o.bpm
-                  ? "border-primary bg-card"
-                  : "border-border bg-card/40 hover:border-primary/60",
-              )}
-            >
-              <div className="display text-2xl">{o.bpm}</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                {o.label}
-              </div>
-            </button>
-          ))}
-        </div>
       </section>
 
       <section className="mt-8">

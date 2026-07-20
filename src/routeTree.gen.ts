@@ -9,22 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VersusRouteImport } from './routes/versus'
-import { Route as PracticeRouteImport } from './routes/practice'
-import { Route as BattleRouteImport } from './routes/battle'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiTtsRouteImport } from './routes/api/tts'
-import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as BattleRouteImport } from './routes/battle'
+import { Route as PracticeRouteImport } from './routes/practice'
+import { Route as VersusRouteImport } from './routes/versus'
 import { Route as ApiScribeTokenRouteImport } from './routes/api/scribe-token'
+import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as ApiTtsRouteImport } from './routes/api/tts'
 
-const VersusRoute = VersusRouteImport.update({
-  id: '/versus',
-  path: '/versus',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PracticeRoute = PracticeRouteImport.update({
-  id: '/practice',
-  path: '/practice',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BattleRoute = BattleRouteImport.update({
@@ -32,14 +27,19 @@ const BattleRoute = BattleRouteImport.update({
   path: '/battle',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PracticeRoute = PracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTtsRoute = ApiTtsRouteImport.update({
-  id: '/api/tts',
-  path: '/api/tts',
+const VersusRoute = VersusRouteImport.update({
+  id: '/versus',
+  path: '/versus',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScribeTokenRoute = ApiScribeTokenRouteImport.update({
+  id: '/api/scribe-token',
+  path: '/api/scribe-token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
@@ -47,9 +47,9 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiScribeTokenRoute = ApiScribeTokenRouteImport.update({
-  id: '/api/scribe-token',
-  path: '/api/scribe-token',
+const ApiTtsRoute = ApiTtsRouteImport.update({
+  id: '/api/tts',
+  path: '/api/tts',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -123,18 +123,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/versus': {
-      id: '/versus'
-      path: '/versus'
-      fullPath: '/versus'
-      preLoaderRoute: typeof VersusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/practice': {
-      id: '/practice'
-      path: '/practice'
-      fullPath: '/practice'
-      preLoaderRoute: typeof PracticeRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/battle': {
@@ -144,18 +137,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BattleRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/practice': {
+      id: '/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof PracticeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/tts': {
-      id: '/api/tts'
-      path: '/api/tts'
-      fullPath: '/api/tts'
-      preLoaderRoute: typeof ApiTtsRouteImport
+    '/versus': {
+      id: '/versus'
+      path: '/versus'
+      fullPath: '/versus'
+      preLoaderRoute: typeof VersusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/scribe-token': {
+      id: '/api/scribe-token'
+      path: '/api/scribe-token'
+      fullPath: '/api/scribe-token'
+      preLoaderRoute: typeof ApiScribeTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/transcribe': {
@@ -165,11 +165,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/scribe-token': {
-      id: '/api/scribe-token'
-      path: '/api/scribe-token'
-      fullPath: '/api/scribe-token'
-      preLoaderRoute: typeof ApiScribeTokenRouteImport
+    '/api/tts': {
+      id: '/api/tts'
+      path: '/api/tts'
+      fullPath: '/api/tts'
+      preLoaderRoute: typeof ApiTtsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -187,3 +187,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
