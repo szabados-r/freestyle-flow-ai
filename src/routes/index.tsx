@@ -121,10 +121,15 @@ function Index() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="flex flex-col">
-          <span className="script neon text-7xl leading-none md:text-9xl">Cypher</span>
+        <div className="mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+          NY · Freestyle Trainer · Est. 2026
+        </div>
+        <h1 className="mt-2 flex flex-col">
+          <span className="script text-7xl italic leading-[0.9] text-foreground md:text-8xl">
+            Cypher
+          </span>
         </h1>
-        <div className="mt-3 h-px w-full bg-gradient-to-r from-[color:var(--neon-pink)] via-[color:var(--gold-1)] to-transparent" />
+        <div className="mt-4 h-px w-full bg-border" />
       </motion.div>
 
       <div className="mt-8 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
@@ -139,12 +144,8 @@ function Index() {
       </div>
       <div className="mt-3 h-px w-full bg-border">
         <div
-          className="h-px transition-all"
-          style={{
-            width: `${(step / totalSteps) * 100}%`,
-            background: "linear-gradient(90deg, var(--neon-pink), var(--neon-magenta), var(--gold-1))",
-            boxShadow: "0 0 12px var(--neon-pink)",
-          }}
+          className="h-px bg-foreground/70 transition-all"
+          style={{ width: `${(step / totalSteps) * 100}%` }}
         />
       </div>
 
@@ -195,12 +196,12 @@ function Index() {
 function StepTitle({ n, title, subtitle }: { n: number; title: string; subtitle?: string }) {
   return (
     <div className="mb-6">
-      <div className="mono text-[10px] uppercase tracking-[0.4em] text-[color:var(--neon-pink)]">
+      <div className="mono text-[10px] uppercase tracking-[0.4em] text-[color:var(--ember)]">
         Step {String(n).padStart(2, "0")}
       </div>
-      <h2 className="script neon mt-1 text-5xl text-foreground md:text-6xl">{title}</h2>
+      <h2 className="script mt-1 text-5xl italic text-foreground md:text-6xl">{title}</h2>
       {subtitle && (
-        <p className="mt-2 max-w-md text-sm italic text-muted-foreground">{subtitle}</p>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">{subtitle}</p>
       )}
     </div>
   );
@@ -232,7 +233,7 @@ function Card({
         active && accent
           ? {
               borderColor: accent,
-              boxShadow: `0 0 0 1px ${accent} inset, 0 0 24px ${accent}99, 0 18px 40px -16px ${accent}66`,
+              boxShadow: `0 0 0 1px ${accent} inset`,
             }
           : undefined
       }
@@ -254,13 +255,13 @@ function StepMode({
       id: "solo",
       label: "Vs Rapper",
       blurb: "You against the selected AI rapper. Trade bars, judged at the end.",
-      accent: "#ff2d9c",
+      accent: "#c96f4a",
     },
     {
       id: "battle",
       label: "2-Player Battle",
       blurb: "Pass the phone. AI rapper opens, you and a friend trade back. Judged at the end.",
-      accent: "#facc15",
+      accent: "#c9a37a",
     },
   ];
   return (
@@ -320,7 +321,7 @@ function SystemConfigPanel({
           >
             <div className="mt-6 space-y-6">
               <div>
-                <div className="mono mb-2 text-[10px] uppercase tracking-[0.3em] text-[color:var(--neon-pink)]">
+                <div className="mono mb-2 text-[10px] uppercase tracking-[0.3em] text-[color:var(--ember)]">
                   Topic
                 </div>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
@@ -339,14 +340,13 @@ function SystemConfigPanel({
                         style={
                           active
                             ? {
-                                borderColor: "var(--gold-1)",
-                                boxShadow:
-                                  "0 0 0 1px var(--gold-1) inset, 0 0 18px rgba(250,204,21,0.4)",
+                                borderColor: "var(--ember)",
+                                boxShadow: "0 0 0 1px var(--ember) inset",
                               }
                             : undefined
                         }
                       >
-                        <div className="script text-lg leading-none">{t.label}</div>
+                        <div className="script text-xl italic leading-none">{t.label}</div>
                         <div className="mt-1 text-[11px] italic opacity-75">{t.blurb}</div>
                       </button>
                     );
@@ -389,7 +389,7 @@ function StepRapper({
             <div className="mono text-[9px] uppercase tracking-[0.3em] opacity-60">
               No. {String(STYLE_LIST.indexOf(s) + 1).padStart(2, "0")}
             </div>
-            <div className="script mt-1 text-2xl leading-tight">{s.name}</div>
+            <div className="script mt-1 text-3xl italic leading-tight">{s.name}</div>
             <div className="mt-2 text-[11px] italic opacity-75">{s.blurb}</div>
           </Card>
         ))}
