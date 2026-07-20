@@ -13,17 +13,20 @@ whether you stayed on beat. Built for the mic on your phone.
 
 English:
 - **The 6 God** — moody Toronto melodic flows.
-- **Pluto** — Atlanta auto-tune trap.
 - **The Queen** — switching voices, technical NY-Trinidad bars.
-- **Slime** — ATL melodic experimentalist.
 
 Magyar:
-- **Magyar MC** — általános magyar freestyle.
-- **Beton** — nyers magyar drill, sötét utcai energia.
-- **Azarja** — dallamos magyar pop-rap, érzelmes flow.
+- **Beton Hofi** — nyers magyar drill, sötét utcai energia.
 
 Hungarian styles auto-detect magyar speech from the mic and judge bars using
 magyar rím- és prozódia-szabályok.
+
+## Difficulty & tempo
+
+Tempo is fixed app-wide at **95 BPM**, independent of difficulty. Difficulty
+(currently locked to **Easy**) controls word/rhyme complexity only — target
+syllable count and vocabulary — not the beat speed. See `LEVELS` and
+`DEFAULT_BPM` in `src/lib/styles.ts`.
 
 ## Stack
 
