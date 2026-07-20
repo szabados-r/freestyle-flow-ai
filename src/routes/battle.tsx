@@ -30,7 +30,7 @@ function Battle() {
         styleId={style}
         bpm={bpm}
         mode="battle"
-        maxRounds={8}
+        maxRounds={4}
         language={language}
         level={level}
         topic={topic}

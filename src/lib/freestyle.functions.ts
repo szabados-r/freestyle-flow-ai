@@ -283,3 +283,31 @@ export const versusVerdict = createServerFn({ method: "POST" })
 
     return { winner, recap: text };
   });
+
+export const rhymesFor = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      word: z.string().min(1),
+      language: languageSchema,
+    }),
+  )
+  .handler(async ({ data }) => {
+    const gateway = getGateway();
+    const lang = data.language ?? "en";
+    const langNote =
+      lang === "hu"
+        ? "Adj magyar rímeket (magyar szavak, természetes szóvégekkel)."
+        : "Give English rhyming words (real words, no slurs).";
+    const { text } = await generateText({
+      model: gateway("google/gemini-3-flash-preview"),
+      system: `You are a rap cheat-sheet. Given a word, return 8-12 rhymes/near-rhymes useful in a freestyle. ${langNote} Return ONLY a comma-separated list, no numbering, no prose.`,
+      prompt: `Word: "${data.word}"`,
+    });
+    const words = text
+      .replace(/```/g, "")
+      .split(/[,\n]/)
+      .map((w) => w.replace(/[^\p{L}\p{M}'\- ]/gu, "").trim())
+      .filter((w) => w.length > 0)
+      .slice(0, 12);
+    return { word: data.word, rhymes: words };
+  });
