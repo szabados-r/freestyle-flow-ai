@@ -56,6 +56,7 @@ export function CypherEngine({
   const [round, setRound] = useState<RoundData | null>(null);
   const [history, setHistory] = useState<RoundData[]>([]);
   const [countdown, setCountdown] = useState(4);
+  const [nextCountdown, setNextCountdown] = useState<number | null>(null);
   const [verdict, setVerdict] = useState<{ winner: string; recap: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingRef = useRef<Map<number, Promise<string>>>(new Map());
@@ -191,13 +192,22 @@ export function CypherEngine({
         return;
       }
       setPhase("betweenRounds");
+      setNextCountdown(3);
     },
     [round, styleId, bpm, language, history, totalRounds, clock],
   );
 
-  const handleNext = useCallback(() => {
-    void runRound();
-  }, [runRound]);
+  // Auto-advance between rounds with a short countdown.
+  useEffect(() => {
+    if (phase !== "betweenRounds" || nextCountdown === null) return;
+    if (nextCountdown <= 0) {
+      setNextCountdown(null);
+      void runRound();
+      return;
+    }
+    const t = setTimeout(() => setNextCountdown((n) => (n ?? 1) - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phase, nextCountdown, runRound]);
 
   const startCypher = useCallback(async () => {
     await clock.start();
@@ -270,6 +280,7 @@ export function CypherEngine({
           endWord={round.aiEndWord}
           speaker="AI"
           accent={style.accent}
+          language={language}
         />
       )}
 
@@ -305,13 +316,20 @@ export function CypherEngine({
       )}
 
       {phase === "betweenRounds" && (
-        <Button
-          className="display w-full py-5 text-lg uppercase tracking-widest"
-          style={{ background: style.accent, color: "#0a0a0a" }}
-          onClick={handleNext}
-        >
-          Next bar ({history.length + 1} / {totalRounds})
-        </Button>
+        <div className="rounded-lg border border-border bg-card p-6 text-center">
+          <div className="mono text-xs uppercase tracking-widest text-muted-foreground">
+            Next bar in
+          </div>
+          <div
+            className="display mt-2 text-6xl"
+            style={{ color: style.accent }}
+          >
+            {nextCountdown ?? 0}
+          </div>
+          <div className="mono mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            Round {history.length + 1} / {totalRounds}
+          </div>
+        </div>
       )}
 
       {phase === "done" && (
